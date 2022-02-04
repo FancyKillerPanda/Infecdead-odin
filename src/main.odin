@@ -16,6 +16,10 @@ infecdead :: proc() -> bool {
 	init_dependencies() or_return;
 	defer quit_dependencies();
 	
+	game: Game;
+	init_game(&game) or_return;
+	run_game(&game);
+	
 	return true;
 }
 
