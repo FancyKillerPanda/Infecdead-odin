@@ -19,7 +19,7 @@ Game :: struct {
 init_game :: proc(using game: ^Game) -> bool {
 	create_window(game) or_return;
 	
-	init_entity(game, &player, { f64(width / 2), f64(height / 2) }, { 32, 32 });
+	player = create_player(game);
 	
 	running = true;
 	return true;
@@ -55,13 +55,14 @@ handle_events :: proc(using game: ^Game) {
 }
 
 update_game :: proc(using game: ^Game, deltaTime: f64) {
+	update_player(&player, deltaTime);
 }
 
 draw_game :: proc(using game: ^Game) {
 	sdl.SetRenderDrawColor(renderer, 192, 192, 192, 255);
 	sdl.RenderClear(renderer);
 
-	draw_entity(&player);
+	draw_player(&player);
 	
 	sdl.RenderPresent(renderer);
 }
