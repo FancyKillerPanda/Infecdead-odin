@@ -5,19 +5,23 @@ import "core:time"
 import sdl "vendor:sdl2"
 
 Game :: struct {
+	running: bool,
+
 	width: u32,
 	height: u32,
 
 	window: ^sdl.Window,
 	renderer: ^sdl.Renderer,
 
-	running: bool,
+	player: Player,
 }
 
-init_game :: proc(game: ^Game) -> bool {
+init_game :: proc(using game: ^Game) -> bool {
 	create_window(game) or_return;
-	game.running = true;
-
+	
+	init_entity(game, &player, { f64(width / 2), f64(height / 2) }, { 32, 32 });
+	
+	running = true;
 	return true;
 }
 
@@ -28,7 +32,7 @@ run_game :: proc(using game: ^Game) {
 		handle_events(game);
 
 		now := time.now();
-		deltaTime := cast(f64) time.diff(lastTime, now) / cast(f64) time.Second;
+		deltaTime := f64(time.diff(lastTime, now)) / f64(time.Second);
 		
 		if deltaTime >= 0.016 {
 			lastTime = now;
@@ -57,6 +61,8 @@ draw_game :: proc(using game: ^Game) {
 	sdl.SetRenderDrawColor(renderer, 192, 192, 192, 255);
 	sdl.RenderClear(renderer);
 
+	draw_entity(&player);
+	
 	sdl.RenderPresent(renderer);
 }
 
