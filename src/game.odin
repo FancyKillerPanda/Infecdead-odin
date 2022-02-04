@@ -1,5 +1,7 @@
 package main;
 
+import "core:time"
+
 import sdl "vendor:sdl2"
 
 Game :: struct {
@@ -20,20 +22,42 @@ init_game :: proc(game: ^Game) -> bool {
 }
 
 run_game :: proc(using game: ^Game) {
+	lastTime := time.now();
+	
 	for running {
-		event: sdl.Event;
-		for sdl.PollEvent(&event) != 0 {
-			#partial switch event.type {
-				case sdl.EventType.QUIT:
-					running = false;
-			}
+		handle_events(game);
+
+		now := time.now();
+		deltaTime := cast(f64) time.diff(lastTime, now) / cast(f64) time.Second;
+		
+		if deltaTime >= 0.016 {
+			lastTime = now;
+			update_game(game, deltaTime);
 		}
-
-		sdl.SetRenderDrawColor(renderer, 192, 192, 192, 255);
-		sdl.RenderClear(renderer);
-
-		sdl.RenderPresent(renderer);
+		
+		draw_game(game);
 	}
+}
+
+handle_events :: proc(using game: ^Game) {
+	event: sdl.Event;
+
+	for sdl.PollEvent(&event) != 0 {
+		#partial switch event.type {
+			case sdl.EventType.QUIT:
+				running = false;
+		}
+	}
+}
+
+update_game :: proc(using game: ^Game, deltaTime: f64) {
+}
+
+draw_game :: proc(using game: ^Game) {
+	sdl.SetRenderDrawColor(renderer, 192, 192, 192, 255);
+	sdl.RenderClear(renderer);
+
+	sdl.RenderPresent(renderer);
 }
 
 create_window :: proc(game: ^Game) -> (success: bool) {
