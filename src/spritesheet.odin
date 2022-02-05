@@ -52,7 +52,7 @@ update_spritesheet :: proc(using spritesheet: ^Spritesheet, deltaTime: f64) {
 	}
 }
 
-draw_spritesheet :: proc(using spritesheet: ^Spritesheet, position: Vector2, horizontalFlip := false) {
+draw_spritesheet :: proc(using spritesheet: ^Spritesheet, position: Vector2, rotation: f64 = 0, horizontalFlip := false, verticalFlip := false) {
 	rect: sdl.Rect;
 	rect.x = i32(position.x - (subrectDimensions.x / 2));
 	rect.y = i32(position.y - (subrectDimensions.y / 2));
@@ -63,8 +63,9 @@ draw_spritesheet :: proc(using spritesheet: ^Spritesheet, position: Vector2, hor
 	
 	flip := sdl.RendererFlip.NONE;
 	if horizontalFlip do flip = sdl.RendererFlip.HORIZONTAL;
+	if verticalFlip do flip = sdl.RendererFlip.VERTICAL;
 	
-	sdl.RenderCopyEx(renderer, texture, &subrect, &rect, 0, nil, flip);
+	sdl.RenderCopyEx(renderer, texture, &subrect, &rect, rotation, nil, flip);
 }
 
 spritesheet_next_frame :: proc(using spritesheet: ^Spritesheet) {

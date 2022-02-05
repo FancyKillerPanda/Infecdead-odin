@@ -19,6 +19,10 @@ Player :: struct {
 
 	velocity: Vector2,
 	acceleration: Vector2,
+
+	currentSpritesheet: ^Spritesheet,
+	idleSpritesheet: ^Spritesheet,
+	walkSpritesheet: ^Spritesheet,
 }
 
 create_player :: proc(game: ^Game) -> (player: Player) {
@@ -26,6 +30,13 @@ create_player :: proc(game: ^Game) -> (player: Player) {
 	
 	player.position = { f64(game.width / 2), f64(game.height / 2) };
 	player.dimensions = { 32, 32 };
+
+	player.idleSpritesheet = new(Spritesheet);
+	init_spritesheet(player.idleSpritesheet, game.renderer, "res/player/idle_0.png", { 32, 32 }, 1, { 0 }, 0);
+	player.walkSpritesheet = new(Spritesheet);
+	init_spritesheet(player.walkSpritesheet, game.renderer, "res/player/walk_spritesheet.png", { 32, 32 }, 2, { 0, 1 }, 50);
+
+	player.currentSpritesheet = player.idleSpritesheet;
 
 	return;
 }
@@ -37,8 +48,8 @@ update_player :: proc(using player: ^Player, deltaTime: f64) {
 	mousePos: Vector2 = { f64(x), f64(y) };
 	
 	// Rotation tracks the mouse position
-	delta := mousePos - position;
-	result := math.to_degrees_f64(math.atan2_f64(-delta.y, delta.x));
+	positionDelta := mousePos - position;
+	result := math.to_degrees_f64(math.atan2_f64(positionDelta.y, positionDelta.x));
 	rotation = math.mod_f64(result + 360.0, 360.0);
 
 	rotationRadians := math.to_radians_f64(rotation);
@@ -65,19 +76,13 @@ update_player :: proc(using player: ^Player, deltaTime: f64) {
 	}
 
 	velocity += acceleration * deltaTime;
-	velocity.x *= PLAYER_FRICTION;
+	velocity *= PLAYER_FRICTION;
 	position += acceleration * deltaTime;
+
+	// Texturing
+	update_spritesheet(player.currentSpritesheet, deltaTime);
 }
 
 draw_player :: proc(using player: ^Player) {
-	rect: sdl.Rect = {
-		i32(position.x - (dimensions.x / 2)),
-		i32(position.y - (dimensions.y / 2)),
-		i32(dimensions.x),
-		i32(dimensions.y),
-	};
-	
-	// TODO(fkp): This is temporary, will be replaced with textures
-	sdl.SetRenderDrawColor(game.renderer, 255, 255, 255, 255);
-	sdl.RenderFillRect(game.renderer, &rect);
+	draw_spritesheet(player.currentSpritesheet, player.position, rotation);
 }
