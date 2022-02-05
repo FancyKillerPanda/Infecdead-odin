@@ -6,14 +6,20 @@ import sdl "vendor:sdl2"
 
 Game :: struct {
 	running: bool,
+	state: GameState,
 
 	width: u32,
 	height: u32,
 
 	window: ^sdl.Window,
 	renderer: ^sdl.Renderer,
+	keysPressed: [sdl.Scancode.NUM_SCANCODES] bool,
 
 	player: Player,
+}
+
+GameState :: enum {
+	Playing,
 }
 
 init_game :: proc(using game: ^Game) -> bool {
@@ -22,6 +28,8 @@ init_game :: proc(using game: ^Game) -> bool {
 	player = create_player(game);
 	
 	running = true;
+	state = .Playing;
+	
 	return true;
 }
 
@@ -50,12 +58,20 @@ handle_events :: proc(using game: ^Game) {
 		#partial switch event.type {
 			case sdl.EventType.QUIT:
 				running = false;
+
+			case sdl.EventType.KEYDOWN:
+				keysPressed[event.key.keysym.scancode] = true;
+
+			case sdl.EventType.KEYUP:
+				keysPressed[event.key.keysym.scancode] = false;
 		}
 	}
 }
 
 update_game :: proc(using game: ^Game, deltaTime: f64) {
-	update_player(&player, deltaTime);
+	if state == .Playing {
+		update_player(&player, deltaTime);
+	}
 }
 
 draw_game :: proc(using game: ^Game) {
