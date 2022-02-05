@@ -1,12 +1,16 @@
 package main;
 
+import "core:fmt"
 import "core:math"
+import "core:strings"
 
 import sdl "vendor:sdl2"
 
 PLAYER_WALK_ACC :: 1000;
 PLAYER_FRICTION :: 0.92;
 PLAYER_ROTATION_SPEED :: 7;
+
+PLAYER_DIRECTIONS: [8] string : { "east", "north_east", "north", "north_west", "west", "south_west", "south", "south_east" };
 
 Vector2 :: [2] f64;
 
@@ -21,8 +25,7 @@ Player :: struct {
 	acceleration: Vector2,
 
 	currentSpritesheet: ^Spritesheet,
-	idleSpritesheet: ^Spritesheet,
-	walkSpritesheet: ^Spritesheet,
+	directionalSpritesheets: [8] ^Spritesheet,
 }
 
 create_player :: proc(game: ^Game) -> (player: Player) {
@@ -31,12 +34,16 @@ create_player :: proc(game: ^Game) -> (player: Player) {
 	player.position = { f64(game.width / 2), f64(game.height / 2) };
 	player.dimensions = { 64, 64 };
 
-	player.idleSpritesheet = new(Spritesheet);
-	init_spritesheet(player.idleSpritesheet, game.renderer, "res/player/idle_spritesheet.png", player.dimensions, { 16, 16 }, 8, { 0, 1, 2, 3, 4, 5, 6, 7 }, 0);
-	// player.walkSpritesheet = new(Spritesheet);
-	// init_spritesheet(player.walkSpritesheet, game.renderer, "res/player/walk_spritesheet.png", player.dimensions, { 16, 16 }, 3, { 0, 1, 2 }, 250);
+	// player.idleSpritesheet = new(Spritesheet);
+	// init_spritesheet(player.idleSpritesheet, game.renderer, "res/player/idle_spritesheet.png", player.dimensions, { 16, 16 }, 8, { 0, 1, 2, 3, 4, 5, 6, 7 }, 0);
 
-	player.currentSpritesheet = player.idleSpritesheet;
+	for direction, i in PLAYER_DIRECTIONS {
+		player.directionalSpritesheets[i] = new(Spritesheet);
+		init_spritesheet(player.directionalSpritesheets[i], game.renderer, strings.clone_to_cstring(fmt.tprintf("res/player/{}_facing.png", direction), context.temp_allocator),
+						 player.dimensions, { 16, 16 }, 4, { 0, 1, 2, 3 }, 250);
+	}
+	
+	player.currentSpritesheet = player.directionalSpritesheets[0];
 
 	return;
 }
@@ -75,14 +82,13 @@ update_player :: proc(using player: ^Player, deltaTime: f64) {
 	position += velocity * deltaTime;
 	
 	// Texturing
-	if velocity != { 0, 0 } {
-		// currentSpritesheet = walkSpritesheet;
-	} else {
-		currentSpritesheet = idleSpritesheet;
-	}
-
-	spritesheet_set_frame(currentSpritesheet, u32(rotation / 45.0));
+	currentSpritesheet = directionalSpritesheets[u32(math.mod_f64(rotation + 22.5, 360.0) / 45.0)];
 	update_spritesheet(player.currentSpritesheet, deltaTime);
+
+	// Put this back once animation textures are made
+	/* if velocity == { 0, 0 } */ {
+		spritesheet_set_frame(currentSpritesheet, 0);
+	}
 }
 
 draw_player :: proc(using player: ^Player) {
