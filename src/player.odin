@@ -4,7 +4,7 @@ import "core:math"
 
 import sdl "vendor:sdl2"
 
-PLAYER_WALK_ACC :: 200;
+PLAYER_WALK_ACC :: 1000;
 PLAYER_FRICTION :: 0.92;
 PLAYER_ROTATION_SPEED :: 7;
 
@@ -32,9 +32,9 @@ create_player :: proc(game: ^Game) -> (player: Player) {
 	player.dimensions = { 32, 32 };
 
 	player.idleSpritesheet = new(Spritesheet);
-	init_spritesheet(player.idleSpritesheet, game.renderer, "res/player/idle_0.png", { 32, 32 }, 1, { 0 }, 0);
+	init_spritesheet(player.idleSpritesheet, game.renderer, "res/player/idle_spritesheet.png", { 32, 32 }, 1, { 0 }, 0);
 	player.walkSpritesheet = new(Spritesheet);
-	init_spritesheet(player.walkSpritesheet, game.renderer, "res/player/walk_spritesheet.png", { 32, 32 }, 2, { 0, 1 }, 50);
+	init_spritesheet(player.walkSpritesheet, game.renderer, "res/player/walk_spritesheet.png", { 32, 32 }, 2, { 0, 1 }, 250);
 
 	player.currentSpritesheet = player.idleSpritesheet;
 
@@ -68,9 +68,19 @@ update_player :: proc(using player: ^Player, deltaTime: f64) {
 
 	velocity += acceleration * deltaTime;
 	velocity *= PLAYER_FRICTION;
-	position += acceleration * deltaTime;
 
+	if abs(velocity.x) < 1.0 do velocity.x = 0;
+	if abs(velocity.y) < 1.0 do velocity.y = 0;
+	
+	position += velocity * deltaTime;
+	
 	// Texturing
+	if velocity != { 0, 0 } {
+		currentSpritesheet = walkSpritesheet;
+	} else {
+		currentSpritesheet = idleSpritesheet;
+	}
+
 	update_spritesheet(player.currentSpritesheet, deltaTime);
 }
 
