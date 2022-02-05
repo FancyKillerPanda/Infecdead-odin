@@ -32,7 +32,8 @@ create_player :: proc(game: ^Game) -> (player: Player) {
 	player.game = game;
 	
 	player.position = { f64(game.width / 2), f64(game.height / 2) };
-	player.dimensions = { 64, 64 };
+	// player.dimensions = { 64, 64 };
+	player.dimensions = { 128, 128 }; // For testing
 
 	// player.idleSpritesheet = new(Spritesheet);
 	// init_spritesheet(player.idleSpritesheet, game.renderer, "res/player/idle_spritesheet.png", player.dimensions, { 16, 16 }, 8, { 0, 1, 2, 3, 4, 5, 6, 7 }, 0);
@@ -40,7 +41,7 @@ create_player :: proc(game: ^Game) -> (player: Player) {
 	for direction, i in PLAYER_DIRECTIONS {
 		player.directionalSpritesheets[i] = new(Spritesheet);
 		init_spritesheet(player.directionalSpritesheets[i], game.renderer, strings.clone_to_cstring(fmt.tprintf("res/player/{}_facing.png", direction), context.temp_allocator),
-						 player.dimensions, { 16, 16 }, 4, { 0, 1, 2, 3 }, 250);
+						 player.dimensions, { 16, 16 }, 4, { 0, 1, 2, 3 }, 200);
 	}
 	
 	player.currentSpritesheet = player.directionalSpritesheets[0];
@@ -76,8 +77,8 @@ update_player :: proc(using player: ^Player, deltaTime: f64) {
 	velocity += acceleration * deltaTime;
 	velocity *= PLAYER_FRICTION;
 
-	if abs(velocity.x) < 1.0 do velocity.x = 0;
-	if abs(velocity.y) < 1.0 do velocity.y = 0;
+	if abs(velocity.x) < 5.0 do velocity.x = 0;
+	if abs(velocity.y) < 5.0 do velocity.y = 0;
 	
 	position += velocity * deltaTime;
 	
@@ -85,8 +86,7 @@ update_player :: proc(using player: ^Player, deltaTime: f64) {
 	currentSpritesheet = directionalSpritesheets[u32(math.mod_f64(rotation + 22.5, 360.0) / 45.0)];
 	update_spritesheet(player.currentSpritesheet, deltaTime);
 
-	// Put this back once animation textures are made
-	/* if velocity == { 0, 0 } */ {
+	if velocity == { 0, 0 } {
 		spritesheet_set_frame(currentSpritesheet, 0);
 	}
 }
