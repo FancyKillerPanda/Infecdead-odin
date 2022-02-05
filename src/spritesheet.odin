@@ -9,6 +9,7 @@ Spritesheet :: struct {
 	renderer: ^sdl.Renderer,
 	texture: ^sdl.Texture,
 	textureRect: sdl.Rect,
+	outputSize: Vector2,
 	
 	subrectDimensions: Vector2,
 	numberOfSubrects: u32,
@@ -22,6 +23,7 @@ Spritesheet :: struct {
 
 // If the animationDelayMs is 0, the animation will not progress automatically
 init_spritesheet :: proc(spritesheet: ^Spritesheet, renderer: ^sdl.Renderer, filepath: cstring,
+						 outputSize: Vector2,
 						 subrectDimensions: Vector2, numberOfSubrects: u32,
 						 animationOrder: [] u32, animationDelayMs: u32) {
 	spritesheet.renderer = renderer;
@@ -36,6 +38,8 @@ init_spritesheet :: proc(spritesheet: ^Spritesheet, renderer: ^sdl.Renderer, fil
 		return;
 	}
 
+	spritesheet.outputSize = outputSize;
+	
 	spritesheet.subrectDimensions = subrectDimensions;
 	spritesheet.numberOfSubrects = numberOfSubrects;
 
@@ -54,10 +58,10 @@ update_spritesheet :: proc(using spritesheet: ^Spritesheet, deltaTime: f64) {
 
 draw_spritesheet :: proc(using spritesheet: ^Spritesheet, position: Vector2, rotation: f64 = 0, horizontalFlip := false, verticalFlip := false) {
 	rect: sdl.Rect;
-	rect.x = i32(position.x - (subrectDimensions.x / 2));
-	rect.y = i32(position.y - (subrectDimensions.y / 2));
-	rect.w = i32(subrectDimensions.x);
-	rect.h = i32(subrectDimensions.y);
+	rect.x = i32(position.x - (outputSize.x / 2));
+	rect.y = i32(position.y - (outputSize.y / 2));
+	rect.w = i32(outputSize.x);
+	rect.h = i32(outputSize.y);
 	
 	subrect := get_spritesheet_subrect(spritesheet, spritesheet.animationOrder[spritesheet.animationCurrentIndex]);
 	

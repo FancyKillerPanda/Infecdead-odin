@@ -29,12 +29,13 @@ create_player :: proc(game: ^Game) -> (player: Player) {
 	player.game = game;
 	
 	player.position = { f64(game.width / 2), f64(game.height / 2) };
-	player.dimensions = { 32, 32 };
+	player.dimensions = { 64, 64 };
+	// player.dimensions = { 16, 16 };
 
 	player.idleSpritesheet = new(Spritesheet);
-	init_spritesheet(player.idleSpritesheet, game.renderer, "res/player/idle_spritesheet.png", { 32, 32 }, 1, { 0 }, 0);
-	player.walkSpritesheet = new(Spritesheet);
-	init_spritesheet(player.walkSpritesheet, game.renderer, "res/player/walk_spritesheet.png", { 32, 32 }, 2, { 0, 1 }, 250);
+	init_spritesheet(player.idleSpritesheet, game.renderer, "res/player/idle_spritesheet.png", player.dimensions, { 16, 16 }, 1, { 0 }, 0);
+	// player.walkSpritesheet = new(Spritesheet);
+	// init_spritesheet(player.walkSpritesheet, game.renderer, "res/player/walk_spritesheet.png", player.dimensions, { 16, 16 }, 3, { 0, 1, 2 }, 250);
 
 	player.currentSpritesheet = player.idleSpritesheet;
 
@@ -76,7 +77,7 @@ update_player :: proc(using player: ^Player, deltaTime: f64) {
 	
 	// Texturing
 	if velocity != { 0, 0 } {
-		currentSpritesheet = walkSpritesheet;
+		// currentSpritesheet = walkSpritesheet;
 	} else {
 		currentSpritesheet = idleSpritesheet;
 	}
