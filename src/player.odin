@@ -4,9 +4,9 @@ import "core:math"
 
 import sdl "vendor:sdl2"
 
-PLAYER_WALK_ACC :: 500;
-PLAYER_STRAFE_ACC :: 250;
+PLAYER_WALK_ACC :: 200;
 PLAYER_FRICTION :: 0.92;
+PLAYER_ROTATION_SPEED :: 7;
 
 Vector2 :: [2] f64;
 
@@ -42,16 +42,6 @@ create_player :: proc(game: ^Game) -> (player: Player) {
 }
 
 update_player :: proc(using player: ^Player, deltaTime: f64) {
-	// Gets the mouse position
-	x, y: i32;
-	sdl.GetMouseState(&x, &y);
-	mousePos: Vector2 = { f64(x), f64(y) };
-	
-	// Rotation tracks the mouse position
-	positionDelta := mousePos - position;
-	result := math.to_degrees_f64(math.atan2_f64(positionDelta.y, positionDelta.x));
-	rotation = math.mod_f64(result + 360.0, 360.0);
-
 	rotationRadians := math.to_radians_f64(rotation);
 	sinRotation := math.sin_f64(rotationRadians);
 	cosRotation := math.cos_f64(rotationRadians);
@@ -63,16 +53,17 @@ update_player :: proc(using player: ^Player, deltaTime: f64) {
 		acceleration.y = sinRotation * PLAYER_WALK_ACC;
 	}
 	if game.keysPressed[sdl.Scancode.S] {
-		acceleration.x = cosRotation * -PLAYER_STRAFE_ACC;
-		acceleration.y = sinRotation * -PLAYER_STRAFE_ACC;
+		acceleration.x = cosRotation * -PLAYER_WALK_ACC * 0.5;
+		acceleration.y = sinRotation * -PLAYER_WALK_ACC * 0.5;
 	}
 	if game.keysPressed[sdl.Scancode.A] {
-		acceleration.x = sinRotation * -PLAYER_STRAFE_ACC;
-		acceleration.y = cosRotation * -PLAYER_STRAFE_ACC;
+		rotation -= PLAYER_ROTATION_SPEED;
+		math.mod_f64(rotation, 360.0);
 	}
 	if game.keysPressed[sdl.Scancode.D] {
-		acceleration.x = sinRotation * PLAYER_STRAFE_ACC;
-		acceleration.y = cosRotation * PLAYER_STRAFE_ACC;
+		rotation += 360.0;
+		rotation += PLAYER_ROTATION_SPEED;
+		math.mod_f64(rotation, 360.0);
 	}
 
 	velocity += acceleration * deltaTime;
