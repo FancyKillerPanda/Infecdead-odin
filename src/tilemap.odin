@@ -115,7 +115,7 @@ parse_tileset :: proc(game_: ^Game, filepath: string) -> (tileset: Tileset, succ
 	return;
 }
 
-draw_tilemap :: proc(using tilemap: ^Tilemap, outputTileDimensions: Vector2) {
+draw_tilemap :: proc(using tilemap: ^Tilemap, outputTileDimensions: Vector2, offset: Vector2) {
 	rect: sdl.Rect = { 0, 0, i32(outputTileDimensions.x), i32(outputTileDimensions.y) };
 	subrect: sdl.Rect = { 0, 0, i32(tileset.tileDimensions.x), i32(tileset.tileDimensions.y) };
 
@@ -127,8 +127,8 @@ draw_tilemap :: proc(using tilemap: ^Tilemap, outputTileDimensions: Vector2) {
 			continue;
 		}
 
-		rect.x = currentColumn * i32(outputTileDimensions.x);
-		rect.y = currentRow * i32(outputTileDimensions.y);
+		rect.x = (currentColumn * i32(outputTileDimensions.x)) - i32(offset.x);
+		rect.y = (currentRow * i32(outputTileDimensions.y)) - i32(offset.y);
 		subrect.x = i32((value % i16(tileset.tilesPerRow)) * i16(tileset.tileDimensions.x));
 		subrect.y = i32((value / i16(tileset.tilesPerRow)) * i16(tileset.tileDimensions.y));
 		

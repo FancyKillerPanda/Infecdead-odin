@@ -4,6 +4,8 @@ import "core:time"
 
 import sdl "vendor:sdl2"
 
+OUTPUT_TILE_SIZE: Vector2 : { 32, 32 };
+
 Game :: struct {
 	running: bool,
 	state: GameState,
@@ -17,6 +19,8 @@ Game :: struct {
 
 	player: Player,
 	tilemap: Tilemap,
+
+	viewOffset: Vector2,
 }
 
 GameState :: enum {
@@ -73,6 +77,20 @@ handle_events :: proc(using game: ^Game) {
 update_game :: proc(using game: ^Game, deltaTime: f64) {
 	if state == .Playing {
 		update_player(&player, deltaTime);
+
+		// The view offset (basically a camera) tracks the player
+		viewOffset = player.worldPosition - Vector2 { f64(game.width) / 2.0, f64(game.height) / 2.0 };
+
+		if viewOffset.x < 0.0 do viewOffset.x = 0.0;
+		if viewOffset.y < 0.0 do viewOffset.y = 0.0;
+
+		if viewOffset.x + f64(game.width) > OUTPUT_TILE_SIZE.x * tilemap.dimensions.x {
+			viewOffset.x = (OUTPUT_TILE_SIZE.x * tilemap.dimensions.x) - f64(game.width);
+		}
+
+		if viewOffset.y + f64(game.height) > OUTPUT_TILE_SIZE.y * tilemap.dimensions.y {
+			viewOffset.y = (OUTPUT_TILE_SIZE.y * tilemap.dimensions.y) - f64(game.height);
+		}
 	}
 }
 
@@ -80,8 +98,8 @@ draw_game :: proc(using game: ^Game) {
 	sdl.SetRenderDrawColor(renderer, 192, 192, 192, 255);
 	sdl.RenderClear(renderer);
 
-	draw_tilemap(&tilemap, { 32, 32 });
-	draw_player(&player);
+	draw_tilemap(&tilemap, OUTPUT_TILE_SIZE, viewOffset);
+	draw_player(&player, viewOffset);
 	
 	sdl.RenderPresent(renderer);
 }

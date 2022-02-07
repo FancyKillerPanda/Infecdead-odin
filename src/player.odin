@@ -15,7 +15,7 @@ Vector2 :: [2] f64;
 Player :: struct {
 	game: ^Game,
 	
-	position: Vector2,
+	worldPosition: Vector2,
 	dimensions: Vector2,
 	rotation: f64,
 
@@ -32,7 +32,7 @@ Player :: struct {
 create_player :: proc(game: ^Game) -> (player: Player) {
 	player.game = game;
 	
-	player.position = { f64(game.width / 2), f64(game.height / 2) };
+	player.worldPosition = { 100, 100 }; // This is temporary, until we have a proper starting spot
 	player.dimensions = { 64, 64 };
 
 	player.walkSpritesheet = new(Spritesheet);
@@ -74,7 +74,7 @@ update_player :: proc(using player: ^Player, deltaTime: f64) {
 	if abs(velocity.x) < 5.0 do velocity.x = 0;
 	if abs(velocity.y) < 5.0 do velocity.y = 0;
 	
-	position += velocity * deltaTime;
+	worldPosition += velocity * deltaTime;
 	
 	// Texturing
 	// update_spritesheet(player.currentSpritesheet, deltaTime);
@@ -94,6 +94,6 @@ update_player :: proc(using player: ^Player, deltaTime: f64) {
 	spritesheet_set_frame(currentSpritesheet, (row * currentSpritesheet.subrectsPerRow) + currentAnimationFrame);
 }
 
-draw_player :: proc(using player: ^Player) {
-	draw_spritesheet(player.currentSpritesheet, player.position);
+draw_player :: proc(using player: ^Player, viewOffset: Vector2) {
+	draw_spritesheet(player.currentSpritesheet, player.worldPosition - viewOffset);
 }
