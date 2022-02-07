@@ -58,6 +58,29 @@ create_player :: proc(game: ^Game) -> (player: Player) {
 	return;
 }
 
+handle_player_events :: proc(using player: ^Player, event: ^sdl.Event) {
+	#partial switch event.type {
+		case .KEYDOWN:
+			#partial switch event.key.keysym.scancode {
+				case .NUM1: fallthrough;
+				case .NUM2: fallthrough;
+				case .NUM3: fallthrough;
+				case .NUM4:
+					player.currentlySelectedInventorySlot = u32(event.key.keysym.scancode - sdl.Scancode.NUM1);
+			}
+
+		case .MOUSEWHEEL:
+			if event.wheel.y > 0 {
+				currentlySelectedInventorySlot += len(inventorySlots);
+				currentlySelectedInventorySlot -= 1;
+			} else if event.wheel.y < 0 {
+				currentlySelectedInventorySlot += 1;
+			}
+
+			currentlySelectedInventorySlot %= len(inventorySlots);
+	}
+}
+
 update_player :: proc(using player: ^Player, deltaTime: f64) {
 	rotationRadians := math.to_radians_f64(rotation);
 	sinRotation := math.sin_f64(rotationRadians);
@@ -97,6 +120,12 @@ update_player :: proc(using player: ^Player, deltaTime: f64) {
 
 	// Texturing
 	// update_spritesheet(player.currentSpritesheet, deltaTime);
+	if inventorySlots[currentlySelectedInventorySlot] == .Empty {
+		currentSpritesheet = walkSpritesheet;
+	} else if inventorySlots[currentlySelectedInventorySlot] == .Pistol {
+		currentSpritesheet = walkWithPistolSpritesheet;
+	}
+	
 	timeSinceLastFrameChange += deltaTime;
 	if timeSinceLastFrameChange >= 0.15 {
 		timeSinceLastFrameChange = 0;

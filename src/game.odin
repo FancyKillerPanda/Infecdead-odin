@@ -69,15 +69,17 @@ handle_events :: proc(using game: ^Game) {
 
 	for sdl.PollEvent(&event) != 0 {
 		#partial switch event.type {
-			case sdl.EventType.QUIT:
+			case .QUIT:
 				running = false;
 
-			case sdl.EventType.KEYDOWN:
+			case .KEYDOWN:
 				keysPressed[event.key.keysym.scancode] = true;
 
-			case sdl.EventType.KEYUP:
+			case .KEYUP:
 				keysPressed[event.key.keysym.scancode] = false;
 		}
+
+		handle_player_events(&player, &event);
 	}
 }
 
