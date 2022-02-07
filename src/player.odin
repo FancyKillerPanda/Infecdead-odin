@@ -24,6 +24,7 @@ Player :: struct {
 
 	currentSpritesheet: ^Spritesheet,
 	walkSpritesheet: ^Spritesheet,
+	walkWithPistolSpritesheet: ^Spritesheet,
 	
 	currentAnimationFrame: u32,
 	timeSinceLastFrameChange: f64,
@@ -37,8 +38,10 @@ create_player :: proc(game: ^Game) -> (player: Player) {
 
 	player.walkSpritesheet = new(Spritesheet);
 	init_spritesheet(player.walkSpritesheet, game.renderer, "res/player/player.png", player.dimensions, { 16, 16 }, 32, 4, nil, 0);
+	player.walkWithPistolSpritesheet = new(Spritesheet);
+	init_spritesheet(player.walkWithPistolSpritesheet, game.renderer, "res/player/player_with_pistol.png", player.dimensions, { 16, 16 }, 32, 4, nil, 0);
 
-	player.currentSpritesheet = player.walkSpritesheet;
+	player.currentSpritesheet = player.walkWithPistolSpritesheet;
 
 	return;
 }
