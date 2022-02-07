@@ -10,6 +10,9 @@ PLAYER_WALK_ACC :: 1000;
 PLAYER_FRICTION :: 0.92;
 PLAYER_ROTATION_SPEED :: 7;
 
+PISTOL_SHOT_COOLDOWN :: 0.4;
+PISTOL_SHOT_VELOCITY :: 800;
+
 Vector2 :: [2] f64;
 
 Player :: struct {
@@ -31,11 +34,21 @@ Player :: struct {
 
 	inventorySlots: [4] InventoryItem,
 	currentlySelectedInventorySlot: u32,
+
+	activeBullets: [dynamic] Bullet,
+	timeSinceLastShot: f64,
 }
 
 InventoryItem :: enum {
 	Empty,
 	Pistol,
+}
+
+Bullet :: struct {
+	worldPosition: Vector2,
+	velocity: Vector2,
+
+	spritesheet: ^Spritesheet,
 }
 
 create_player :: proc(game: ^Game) -> (player: Player) {
@@ -78,6 +91,11 @@ handle_player_events :: proc(using player: ^Player, event: ^sdl.Event) {
 			}
 
 			currentlySelectedInventorySlot %= len(inventorySlots);
+
+		case .MOUSEBUTTONDOWN:
+			if event.button.button == sdl.BUTTON_LEFT {
+				shoot(player);
+			}
 	}
 }
 
@@ -118,6 +136,13 @@ update_player :: proc(using player: ^Player, deltaTime: f64) {
 	worldPosition.x = clamp(worldPosition.x, dimensions.x / 2.0, (game.tilemap.dimensions.x * OUTPUT_TILE_SIZE.x) - (dimensions.x / 2.0));
 	worldPosition.y = clamp(worldPosition.y, dimensions.y / 2.0, (game.tilemap.dimensions.y * OUTPUT_TILE_SIZE.y) - (dimensions.y / 2.0));
 
+	// Shooting
+	timeSinceLastShot += deltaTime;
+
+	for bullet in &activeBullets {
+		bullet.worldPosition += bullet.velocity * deltaTime;
+	}
+	
 	// Texturing
 	// update_spritesheet(player.currentSpritesheet, deltaTime);
 	if inventorySlots[currentlySelectedInventorySlot] == .Empty {
@@ -144,4 +169,34 @@ update_player :: proc(using player: ^Player, deltaTime: f64) {
 
 draw_player :: proc(using player: ^Player, viewOffset: Vector2) {
 	draw_spritesheet(player.currentSpritesheet, player.worldPosition - viewOffset);
+
+	for bullet in activeBullets {
+		draw_spritesheet(bullet.spritesheet, bullet.worldPosition - viewOffset);
+	}
+}
+
+shoot :: proc(using player: ^Player) {
+	if inventorySlots[currentlySelectedInventorySlot] == .Pistol {
+		if timeSinceLastShot >= PISTOL_SHOT_COOLDOWN {
+			timeSinceLastShot = 0;
+			append(&activeBullets, create_pistol_bullet(player));
+		}
+	}
+}
+
+create_pistol_bullet :: proc(using player: ^Player) -> (bullet: Bullet) {
+	rotationRadians := math.to_radians_f64(rotation);
+	
+	bullet.worldPosition = worldPosition;
+	bullet.velocity.x = math.cos_f64(rotationRadians) * PISTOL_SHOT_VELOCITY;
+	bullet.velocity.y = -math.sin_f64(rotationRadians) * PISTOL_SHOT_VELOCITY;
+
+	bullet.spritesheet = new(Spritesheet);
+	init_spritesheet(bullet.spritesheet, game.renderer, "res/bullets/pistol_bullet.png", { 0, 0 }, { 0, 0 }, 1, 1, nil, 0);
+
+	return;
+}
+
+destroy_bullet :: proc(bullet: ^Bullet) {
+	free(bullet.spritesheet);
 }
