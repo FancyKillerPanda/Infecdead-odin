@@ -36,7 +36,7 @@ init_game :: proc(using game: ^Game) -> bool {
 	
 	player = create_player(game);
 	tilemap = parse_tilemap(game, "res/map/outside.json") or_return;
-	game.currentWorldDimensions = tilemap.dimensions;
+	game.currentWorldDimensions = tilemap.dimensions * OUTPUT_TILE_SIZE;
 	
 	init_spritesheet(&inventorySlotBackground, renderer, "res/ui/inventory_slot_background.png", { 0, 0 }, { 0, 0 }, 1, 1, nil, 0);
 	init_spritesheet(&inventorySlotBackgroundSelected, renderer, "res/ui/inventory_slot_background_selected.png", { 0, 0 }, { 0, 0 }, 1, 1, nil, 0);
@@ -95,12 +95,12 @@ update_game :: proc(using game: ^Game, deltaTime: f64) {
 		if viewOffset.x < 0.0 do viewOffset.x = 0.0;
 		if viewOffset.y < 0.0 do viewOffset.y = 0.0;
 
-		if viewOffset.x + game.screenDimensions.x > OUTPUT_TILE_SIZE.x * currentWorldDimensions.x {
-			viewOffset.x = (OUTPUT_TILE_SIZE.x * currentWorldDimensions.x) - game.screenDimensions.x;
+		if viewOffset.x + game.screenDimensions.x > currentWorldDimensions.x {
+			viewOffset.x = currentWorldDimensions.x - game.screenDimensions.x;
 		}
 
-		if viewOffset.y + game.screenDimensions.y > OUTPUT_TILE_SIZE.y * currentWorldDimensions.y {
-			viewOffset.y = (OUTPUT_TILE_SIZE.y * currentWorldDimensions.y) - game.screenDimensions.y;
+		if viewOffset.y + game.screenDimensions.y > currentWorldDimensions.y {
+			viewOffset.y = currentWorldDimensions.y - game.screenDimensions.y;
 		}
 	}
 }

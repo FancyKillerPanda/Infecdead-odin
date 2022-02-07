@@ -12,6 +12,7 @@ PLAYER_ROTATION_SPEED :: 7;
 
 PISTOL_SHOT_COOLDOWN :: 0.4;
 PISTOL_SHOT_VELOCITY :: 800;
+PISTOL_SHOT_LIFETIME :: 1.0;
 
 Vector2 :: [2] f64;
 
@@ -47,6 +48,7 @@ InventoryItem :: enum {
 Bullet :: struct {
 	worldPosition: Vector2,
 	velocity: Vector2,
+	lifeTime: f64,
 
 	spritesheet: ^Spritesheet,
 }
@@ -139,8 +141,23 @@ update_player :: proc(using player: ^Player, deltaTime: f64) {
 	// Shooting
 	timeSinceLastShot += deltaTime;
 
-	for bullet in &activeBullets {
+	for i := 0; i < len(activeBullets); {
+		bullet := &activeBullets[i];
 		bullet.worldPosition += bullet.velocity * deltaTime;
+
+		bullet.lifeTime += deltaTime;
+		if bullet.lifeTime >= PISTOL_SHOT_LIFETIME {
+			destroy_bullet(player, i);
+			continue;
+		}
+
+		if bullet.worldPosition.x < 0 || bullet.worldPosition.y < 0 ||
+		   bullet.worldPosition.x > game.currentWorldDimensions.x || bullet.worldPosition.y > game.currentWorldDimensions.y {
+			destroy_bullet(player, i);
+			continue;
+		}
+
+		i += 1;
 	}
 	
 	// Texturing
@@ -197,6 +214,7 @@ create_pistol_bullet :: proc(using player: ^Player) -> (bullet: Bullet) {
 	return;
 }
 
-destroy_bullet :: proc(bullet: ^Bullet) {
-	free(bullet.spritesheet);
+destroy_bullet :: proc(player: ^Player, index: int) {
+	free(player.activeBullets[index].spritesheet);
+	ordered_remove(&player.activeBullets, index);
 }
