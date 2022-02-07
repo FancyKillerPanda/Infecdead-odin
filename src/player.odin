@@ -33,8 +33,7 @@ create_player :: proc(game: ^Game) -> (player: Player) {
 	player.game = game;
 	
 	player.position = { f64(game.width / 2), f64(game.height / 2) };
-	// player.dimensions = { 64, 64 };
-	player.dimensions = { 128, 128 }; // For testing
+	player.dimensions = { 64, 64 };
 
 	player.walkSpritesheet = new(Spritesheet);
 	init_spritesheet(player.walkSpritesheet, game.renderer, "res/player/player.png", player.dimensions, { 16, 16 }, 32, 4, nil, 0);

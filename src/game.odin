@@ -16,6 +16,7 @@ Game :: struct {
 	keysPressed: [sdl.Scancode.NUM_SCANCODES] bool,
 
 	player: Player,
+	tilemap: Tilemap,
 }
 
 GameState :: enum {
@@ -26,6 +27,7 @@ init_game :: proc(using game: ^Game) -> bool {
 	create_window(game) or_return;
 	
 	player = create_player(game);
+	tilemap = parse_tilemap(game, "res/map/outside.json") or_return;
 	
 	running = true;
 	state = .Playing;
@@ -78,6 +80,7 @@ draw_game :: proc(using game: ^Game) {
 	sdl.SetRenderDrawColor(renderer, 192, 192, 192, 255);
 	sdl.RenderClear(renderer);
 
+	draw_tilemap(&tilemap, { 32, 32 });
 	draw_player(&player);
 	
 	sdl.RenderPresent(renderer);

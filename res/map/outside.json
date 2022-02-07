@@ -3,8 +3,8 @@
     {
      "export":
         {
-         "format":"csv",
-         "target":"outside.csv"
+         "format":"json",
+         "target":"outside-1.json"
         }
     },
  "height":100,
@@ -31,7 +31,7 @@
  "tilesets":[
         {
          "firstgid":1,
-         "source":"tileset.tsx"
+         "source":"tileset.json"
         }],
  "tilewidth":16,
  "type":"map",
