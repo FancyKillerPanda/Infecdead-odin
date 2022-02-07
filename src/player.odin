@@ -75,7 +75,11 @@ update_player :: proc(using player: ^Player, deltaTime: f64) {
 	if abs(velocity.y) < 5.0 do velocity.y = 0;
 	
 	worldPosition += velocity * deltaTime;
-	
+
+	// Position bounds checking
+	worldPosition.x = clamp(worldPosition.x, dimensions.x / 2.0, (game.tilemap.dimensions.x * OUTPUT_TILE_SIZE.x) - (dimensions.x / 2.0));
+	worldPosition.y = clamp(worldPosition.y, dimensions.y / 2.0, (game.tilemap.dimensions.y * OUTPUT_TILE_SIZE.y) - (dimensions.y / 2.0));
+
 	// Texturing
 	// update_spritesheet(player.currentSpritesheet, deltaTime);
 	timeSinceLastFrameChange += deltaTime;

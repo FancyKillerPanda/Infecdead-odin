@@ -10,8 +10,8 @@ Game :: struct {
 	running: bool,
 	state: GameState,
 
-	width: u32,
-	height: u32,
+	screenDimensions: Vector2,
+	currentWorldDimensions: Vector2,
 
 	window: ^sdl.Window,
 	renderer: ^sdl.Renderer,
@@ -32,6 +32,7 @@ init_game :: proc(using game: ^Game) -> bool {
 	
 	player = create_player(game);
 	tilemap = parse_tilemap(game, "res/map/outside.json") or_return;
+	game.currentWorldDimensions = tilemap.dimensions;
 	
 	running = true;
 	state = .Playing;
@@ -79,17 +80,17 @@ update_game :: proc(using game: ^Game, deltaTime: f64) {
 		update_player(&player, deltaTime);
 
 		// The view offset (basically a camera) tracks the player
-		viewOffset = player.worldPosition - Vector2 { f64(game.width) / 2.0, f64(game.height) / 2.0 };
+		viewOffset = player.worldPosition - (game.screenDimensions / 2.0);
 
 		if viewOffset.x < 0.0 do viewOffset.x = 0.0;
 		if viewOffset.y < 0.0 do viewOffset.y = 0.0;
 
-		if viewOffset.x + f64(game.width) > OUTPUT_TILE_SIZE.x * tilemap.dimensions.x {
-			viewOffset.x = (OUTPUT_TILE_SIZE.x * tilemap.dimensions.x) - f64(game.width);
+		if viewOffset.x + game.screenDimensions.x > OUTPUT_TILE_SIZE.x * currentWorldDimensions.x {
+			viewOffset.x = (OUTPUT_TILE_SIZE.x * currentWorldDimensions.x) - game.screenDimensions.x;
 		}
 
-		if viewOffset.y + f64(game.height) > OUTPUT_TILE_SIZE.y * tilemap.dimensions.y {
-			viewOffset.y = (OUTPUT_TILE_SIZE.y * tilemap.dimensions.y) - f64(game.height);
+		if viewOffset.y + game.screenDimensions.y > OUTPUT_TILE_SIZE.y * currentWorldDimensions.y {
+			viewOffset.y = (OUTPUT_TILE_SIZE.y * currentWorldDimensions.y) - game.screenDimensions.y;
 		}
 	}
 }
@@ -107,10 +108,9 @@ draw_game :: proc(using game: ^Game) {
 create_window :: proc(game: ^Game) -> (success: bool) {
 	// TODO(fkp): Determine this based on monitor size
 	// TODO(fkp): Allow toggling between fullscreen and windowed
-	game.width = 1920;
-	game.height = 1080;
+	game.screenDimensions = { 1920, 1080 };
 	
-	game.window = sdl.CreateWindow("Infecdead", 0, 0, i32(game.width), i32(game.height), nil);
+	game.window = sdl.CreateWindow("Infecdead", 0, 0, i32(game.screenDimensions.x), i32(game.screenDimensions.y), nil);
 	if game.window == nil {
 		printf("Error: Failed to create window. Message: '{}'\n", sdl.GetError());
 		return false;
