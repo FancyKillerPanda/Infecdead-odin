@@ -24,6 +24,7 @@ Game :: struct {
 
 	inventorySlotBackground: Spritesheet,
 	inventorySlotBackgroundSelected: Spritesheet,
+	pistolIcon: Spritesheet,
 }
 
 GameState :: enum {
@@ -39,6 +40,7 @@ init_game :: proc(using game: ^Game) -> bool {
 	
 	init_spritesheet(&inventorySlotBackground, renderer, "res/ui/inventory_slot_background.png", { 0, 0 }, { 0, 0 }, 1, 1, nil, 0);
 	init_spritesheet(&inventorySlotBackgroundSelected, renderer, "res/ui/inventory_slot_background_selected.png", { 0, 0 }, { 0, 0 }, 1, 1, nil, 0);
+	init_spritesheet(&pistolIcon, renderer, "res/ui/pistol_icon.png", { 0, 0 }, { 0, 0 }, 1, 1, nil, 0);
 	
 	running = true;
 	state = .Playing;
@@ -118,11 +120,19 @@ draw_inventory_slots :: proc(using game: ^Game) {
 	x := (game.screenDimensions.x / 2) - (inventorySlotBackground.outputSize.x * 1.5);
 	y := game.screenDimensions.y * 19 / 20;
 	
-	for i in 0..<4 {
+	for i in 0..<len(player.inventorySlots) {
 		if u32(i) == player.currentlySelectedInventorySlot {
 			draw_spritesheet(&inventorySlotBackgroundSelected, { x, y });
 		} else {
 			draw_spritesheet(&inventorySlotBackground, { x, y });
+		}
+
+		switch player.inventorySlots[i] {
+			case .Empty:
+				// Do nothing
+
+			case .Pistol:
+				draw_spritesheet(&pistolIcon, { x, y });
 		}
 
 		x += inventorySlotBackground.outputSize.x;
