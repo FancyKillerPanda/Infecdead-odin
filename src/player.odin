@@ -10,8 +10,6 @@ PLAYER_WALK_ACC :: 1000;
 PLAYER_FRICTION :: 0.92;
 PLAYER_ROTATION_SPEED :: 7;
 
-PLAYER_DIRECTIONS: [8] string : { "east", "north_east", "north", "north_west", "west", "south_west", "south", "south_east" };
-
 Vector2 :: [2] f64;
 
 Player :: struct {
@@ -25,7 +23,10 @@ Player :: struct {
 	acceleration: Vector2,
 
 	currentSpritesheet: ^Spritesheet,
-	directionalSpritesheets: [8] ^Spritesheet,
+	walkSpritesheet: ^Spritesheet,
+	
+	currentAnimationFrame: u32,
+	timeSinceLastFrameChange: f64,
 }
 
 create_player :: proc(game: ^Game) -> (player: Player) {
@@ -35,16 +36,10 @@ create_player :: proc(game: ^Game) -> (player: Player) {
 	// player.dimensions = { 64, 64 };
 	player.dimensions = { 128, 128 }; // For testing
 
-	// player.idleSpritesheet = new(Spritesheet);
-	// init_spritesheet(player.idleSpritesheet, game.renderer, "res/player/idle_spritesheet.png", player.dimensions, { 16, 16 }, 8, { 0, 1, 2, 3, 4, 5, 6, 7 }, 0);
+	player.walkSpritesheet = new(Spritesheet);
+	init_spritesheet(player.walkSpritesheet, game.renderer, "res/player/player.png", player.dimensions, { 16, 16 }, 32, 4, nil, 0);
 
-	for direction, i in PLAYER_DIRECTIONS {
-		player.directionalSpritesheets[i] = new(Spritesheet);
-		init_spritesheet(player.directionalSpritesheets[i], game.renderer, strings.clone_to_cstring(fmt.tprintf("res/player/{}_facing.png", direction), context.temp_allocator),
-						 player.dimensions, { 16, 16 }, 4, { 0, 1, 2, 3 }, 200);
-	}
-	
-	player.currentSpritesheet = player.directionalSpritesheets[0];
+	player.currentSpritesheet = player.walkSpritesheet;
 
 	return;
 }
@@ -83,12 +78,21 @@ update_player :: proc(using player: ^Player, deltaTime: f64) {
 	position += velocity * deltaTime;
 	
 	// Texturing
-	currentSpritesheet = directionalSpritesheets[u32(math.mod_f64(rotation + 22.5, 360.0) / 45.0)];
-	update_spritesheet(player.currentSpritesheet, deltaTime);
+	// update_spritesheet(player.currentSpritesheet, deltaTime);
+	timeSinceLastFrameChange += deltaTime;
+	if timeSinceLastFrameChange >= 0.15 {
+		timeSinceLastFrameChange = 0;
+
+		currentAnimationFrame += 1;
+		currentAnimationFrame %= currentSpritesheet.subrectsPerRow;
+	}
 
 	if velocity == { 0, 0 } {
-		spritesheet_set_frame(currentSpritesheet, 0);
+		currentAnimationFrame = 0;
 	}
+
+	row := u32(math.mod_f64(rotation + 22.5, 360.0) / 45.0);
+	spritesheet_set_frame(currentSpritesheet, (row * currentSpritesheet.subrectsPerRow) + currentAnimationFrame);
 }
 
 draw_player :: proc(using player: ^Player) {

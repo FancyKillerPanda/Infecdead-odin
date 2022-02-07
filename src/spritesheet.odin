@@ -13,6 +13,7 @@ Spritesheet :: struct {
 	
 	subrectDimensions: Vector2,
 	numberOfSubrects: u32,
+	subrectsPerRow: u32,
 
 	timeSinceLastTextureChange: f64,
 
@@ -24,7 +25,7 @@ Spritesheet :: struct {
 // If the animationDelayMs is 0, the animation will not progress automatically
 init_spritesheet :: proc(spritesheet: ^Spritesheet, renderer: ^sdl.Renderer, filepath: cstring,
 						 outputSize: Vector2,
-						 subrectDimensions: Vector2, numberOfSubrects: u32,
+						 subrectDimensions: Vector2, numberOfSubrects: u32, subrectsPerRow: u32,
 						 animationOrder: [] u32, animationDelayMs: u32) {
 	spritesheet.renderer = renderer;
 	spritesheet.texture = img.LoadTexture(renderer, filepath);
@@ -42,6 +43,7 @@ init_spritesheet :: proc(spritesheet: ^Spritesheet, renderer: ^sdl.Renderer, fil
 	
 	spritesheet.subrectDimensions = subrectDimensions;
 	spritesheet.numberOfSubrects = numberOfSubrects;
+	spritesheet.subrectsPerRow = subrectsPerRow;
 
 	spritesheet.animationOrder = slice.clone(animationOrder);
 	spritesheet.animationDelayMs = animationDelayMs;
@@ -63,7 +65,12 @@ draw_spritesheet :: proc(using spritesheet: ^Spritesheet, position: Vector2, rot
 	rect.w = i32(outputSize.x);
 	rect.h = i32(outputSize.y);
 	
-	subrect := get_spritesheet_subrect(spritesheet, spritesheet.animationOrder[spritesheet.animationCurrentIndex]);
+	subrect: sdl.Rect;
+	if animationOrder == nil {
+		subrect = get_spritesheet_subrect(spritesheet, animationCurrentIndex);
+	} else {
+		subrect = get_spritesheet_subrect(spritesheet, animationOrder[animationCurrentIndex]);
+	}
 	
 	flip := sdl.RendererFlip.NONE;
 	if horizontalFlip do flip = sdl.RendererFlip.HORIZONTAL;
@@ -74,21 +81,33 @@ draw_spritesheet :: proc(using spritesheet: ^Spritesheet, position: Vector2, rot
 
 spritesheet_next_frame :: proc(using spritesheet: ^Spritesheet) {
 	animationCurrentIndex += 1;
-	animationCurrentIndex %= u32(len(animationOrder));
+	
+	if animationOrder == nil {
+		animationCurrentIndex %= numberOfSubrects;
+	} else {
+		animationCurrentIndex %= u32(len(animationOrder));
+	}
 }
 
 spritesheet_set_frame :: proc(using spritesheet: ^Spritesheet, frameIndex: u32) {
-	assert(frameIndex < u32(len(animationOrder)));
+	if animationOrder == nil {
+		assert(frameIndex < numberOfSubrects);
+	} else {
+		assert(frameIndex < u32(len(animationOrder)));
+	}
+
 	animationCurrentIndex = frameIndex;
 }
 
-// TODO(fkp): Allow multiple lines of images
 get_spritesheet_subrect :: proc(using spritesheet: ^Spritesheet, subrectIndex: u32) -> sdl.Rect {
 	assert(subrectIndex < numberOfSubrects);
 
+	subrectRow := subrectIndex / subrectsPerRow;
+	subrectCol := subrectIndex % subrectsPerRow;
+	
 	return sdl.Rect {
-		i32(subrectIndex * u32(subrectDimensions.x)),
-		0,
+		i32(subrectCol * u32(subrectDimensions.x)),
+		i32(subrectRow * u32(subrectDimensions.y)),
 		i32(subrectDimensions.x),
 		i32(subrectDimensions.y),
 	};
