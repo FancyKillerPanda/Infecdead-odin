@@ -39,9 +39,18 @@ init_spritesheet :: proc(spritesheet: ^Spritesheet, renderer: ^sdl.Renderer, fil
 		return;
 	}
 
-	spritesheet.outputSize = outputSize;
-	
-	spritesheet.subrectDimensions = subrectDimensions;
+	if outputSize != { 0, 0 } {
+		spritesheet.outputSize = outputSize;
+	} else {
+		spritesheet.outputSize = { f64(spritesheet.textureRect.w), f64(spritesheet.textureRect.h) };
+	}
+
+	if subrectDimensions != { 0, 0 } {
+		spritesheet.subrectDimensions = subrectDimensions;
+	} else {
+		spritesheet.subrectDimensions = { f64(spritesheet.textureRect.w), f64(spritesheet.textureRect.h) };
+	}
+
 	spritesheet.numberOfSubrects = numberOfSubrects;
 	spritesheet.subrectsPerRow = subrectsPerRow;
 

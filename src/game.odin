@@ -21,6 +21,9 @@ Game :: struct {
 	tilemap: Tilemap,
 
 	viewOffset: Vector2,
+
+	inventorySlotBackground: Spritesheet,
+	inventorySlotBackgroundSelected: Spritesheet,
 }
 
 GameState :: enum {
@@ -33,6 +36,9 @@ init_game :: proc(using game: ^Game) -> bool {
 	player = create_player(game);
 	tilemap = parse_tilemap(game, "res/map/outside.json") or_return;
 	game.currentWorldDimensions = tilemap.dimensions;
+	
+	init_spritesheet(&inventorySlotBackground, renderer, "res/ui/inventory_slot_background.png", { 0, 0 }, { 0, 0 }, 1, 1, nil, 0);
+	init_spritesheet(&inventorySlotBackgroundSelected, renderer, "res/ui/inventory_slot_background_selected.png", { 0, 0 }, { 0, 0 }, 1, 1, nil, 0);
 	
 	running = true;
 	state = .Playing;
@@ -101,8 +107,24 @@ draw_game :: proc(using game: ^Game) {
 
 	draw_tilemap(&tilemap, OUTPUT_TILE_SIZE, viewOffset);
 	draw_player(&player, viewOffset);
+	draw_inventory_slots(game);
 	
 	sdl.RenderPresent(renderer);
+}
+
+draw_inventory_slots :: proc(using game: ^Game) {
+	x := (game.screenDimensions.x / 2) - (inventorySlotBackground.outputSize.x * 1.5);
+	y := game.screenDimensions.y * 19 / 20;
+	
+	for i in 0..<4 {
+		if u32(i) == player.currentlySelectedInventorySlot {
+			draw_spritesheet(&inventorySlotBackgroundSelected, { x, y });
+		} else {
+			draw_spritesheet(&inventorySlotBackground, { x, y });
+		}
+
+		x += inventorySlotBackground.outputSize.x;
+	}
 }
 
 create_window :: proc(game: ^Game) -> (success: bool) {

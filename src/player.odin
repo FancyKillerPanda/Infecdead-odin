@@ -28,13 +28,20 @@ Player :: struct {
 	
 	currentAnimationFrame: u32,
 	timeSinceLastFrameChange: f64,
+
+	inventorySlots: [4] InventoryItem,
+	currentlySelectedInventorySlot: u32,
+}
+
+InventoryItem :: enum {
+	Empty,
+	Pistol,
 }
 
 create_player :: proc(game: ^Game) -> (player: Player) {
 	player.game = game;
 	
 	player.worldPosition = { 100, 100 }; // This is temporary, until we have a proper starting spot
-	// player.dimensions = { 64, 64 };
 	player.dimensions = { 96, 96 };
 
 	player.walkSpritesheet = new(Spritesheet);
@@ -43,6 +50,10 @@ create_player :: proc(game: ^Game) -> (player: Player) {
 	init_spritesheet(player.walkWithPistolSpritesheet, game.renderer, "res/player/player_with_pistol.png", player.dimensions, { 16, 16 }, 32, 4, nil, 0);
 
 	player.currentSpritesheet = player.walkWithPistolSpritesheet;
+
+	// TODO(fkp): Make the player pick this up somewhere
+	player.inventorySlots[1] = .Pistol;
+	player.currentlySelectedInventorySlot = 1;
 
 	return;
 }
