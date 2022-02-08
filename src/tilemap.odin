@@ -114,7 +114,7 @@ parse_tileset :: proc(game_: ^Game, filepath: string) -> (tileset: Tileset, succ
 		return;
 	}
 
-	assert(i32(dimensions.x) == width && i32(dimensions.y) == height, "Tileset image dimensions do not match.");
+	// assert(i32(dimensions.x) == width && i32(dimensions.y) == height, "Tileset image dimensions do not match.");
 	
 	success = true;
 	return;
