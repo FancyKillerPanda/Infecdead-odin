@@ -12,6 +12,7 @@ Tilemap :: struct {
 	dimensions: Vector2,
 	tileset: Tileset,
 	mapData: [dynamic] [dynamic] i16, // Holds data for each layer
+	objects: [dynamic] sdl.Rect,
 };
 
 Tileset :: struct {
@@ -23,7 +24,7 @@ Tileset :: struct {
 	tilesPerRow: u32,
 }
 
-parse_tilemap :: proc(game: ^Game, filepath: string) -> (tilemap: Tilemap, success: bool) {
+parse_tilemap :: proc(game: ^Game, filepath: string, outputTileSize: Vector2,) -> (tilemap: Tilemap, success: bool) {
 	using tilemap;
 
 	data, readSuccess := os.read_entire_file(filepath);
@@ -55,15 +56,30 @@ parse_tilemap :: proc(game: ^Game, filepath: string) -> (tilemap: Tilemap, succe
 	clear(&mapData);
 
 	for layer, i in mainObject["layers"].(json.Array) { 
-		append(&mapData, [dynamic] i16 {});
-		reserve(&mapData[i], int(dimensions.x * dimensions.y * size_of(mapData[i][0])));
-		
-		for tile in layer.(json.Object)["data"].(json.Array) {
-			value := cast(type_of(mapData[i][0])) tile.(json.Integer);
-			if value <= 0 {
-				append(&mapData[i], -1);
-			} else {
-				append(&mapData[i], value - 1);
+		if layer.(json.Object)["type"].(json.String) == "tilelayer" {
+			append(&mapData, [dynamic] i16 {});
+			reserve(&mapData[i], int(dimensions.x * dimensions.y));
+			
+			for tile in layer.(json.Object)["data"].(json.Array) {
+				value := cast(type_of(mapData[i][0])) tile.(json.Integer);
+				if value <= 0 {
+					append(&mapData[i], -1);
+				} else {
+					append(&mapData[i], value - 1);
+				}
+			}
+		} else if layer.(json.Object)["type"].(json.String) == "objectgroup" {
+			scale := outputTileSize / tileset.tileDimensions;
+			objectValues := layer.(json.Object)["objects"].(json.Array);
+			reserve(&objects, len(objects) + len(objectValues));
+			
+			for value in objectValues {
+				append(&objects, sdl.Rect {
+					cast(i32) (f64(value.(json.Object)["x"].(json.Integer)) * scale.x),
+					cast(i32) (f64(value.(json.Object)["y"].(json.Integer)) * scale.y),
+					cast(i32) (f64(value.(json.Object)["width"].(json.Integer)) * scale.x),
+					cast(i32) (f64(value.(json.Object)["height"].(json.Integer)) * scale.y),
+				});
 			}
 		}
 	}

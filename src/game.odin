@@ -34,7 +34,7 @@ GameState :: enum {
 init_game :: proc(using game: ^Game) -> bool {
 	create_window(game) or_return;
 	
-	tilemap = parse_tilemap(game, "res/map/outside.json") or_return;
+	tilemap = parse_tilemap(game, "res/map/outside.json", OUTPUT_TILE_SIZE) or_return;
 	game.currentWorldDimensions = tilemap.dimensions * OUTPUT_TILE_SIZE;
 	player = create_player(game);
 	

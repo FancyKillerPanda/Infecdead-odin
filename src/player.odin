@@ -133,12 +133,38 @@ update_player :: proc(using player: ^Player, deltaTime: f64) {
 	if abs(velocity.x) < 5.0 do velocity.x = 0;
 	if abs(velocity.y) < 5.0 do velocity.y = 0;
 	
-	worldPosition += velocity * deltaTime;
+	// Updates position and does collision checking
+	worldPosition.x += velocity.x * deltaTime;
+	worldPositionRect: sdl.Rect = {
+		i32(worldPosition.x - (dimensions.x / 2.0)),
+		i32(worldPosition.y - (dimensions.y / 4.0)),
+		i32(dimensions.x),
+		i32(dimensions.y / 2.0),
+	};
 
-	// Position bounds checking
+	for object in &game.tilemap.objects {
+		if sdl.HasIntersection(&worldPositionRect, &object) {
+			worldPosition.x -= velocity.x * deltaTime;
+			velocity.x = 0;
+			break;
+		}
+	}
+
+	worldPosition.y += velocity.y * deltaTime;
+	worldPositionRect.x = i32(worldPosition.x - (dimensions.x / 2.0));
+	worldPositionRect.y = i32(worldPosition.y - (dimensions.y / 4.0));
+
+	for object in &game.tilemap.objects {
+		if sdl.HasIntersection(&worldPositionRect, &object) {
+			worldPosition.y -= velocity.y * deltaTime;
+			velocity.y = 0;
+			break;
+		}
+	}
+
 	worldPosition.x = clamp(worldPosition.x, dimensions.x / 2.0, (game.tilemap.dimensions.x * OUTPUT_TILE_SIZE.x) - (dimensions.x / 2.0));
 	worldPosition.y = clamp(worldPosition.y, dimensions.y / 2.0, (game.tilemap.dimensions.y * OUTPUT_TILE_SIZE.y) - (dimensions.y / 2.0));
-
+	
 	// Shooting
 	timeSinceLastShot += deltaTime;
 
