@@ -7,7 +7,7 @@ import "core:strings"
 import sdl "vendor:sdl2"
 
 PLAYER_WALK_ACC :: 1000;
-PLAYER_FRICTION :: 0.92;
+PLAYER_FRICTION :: 0.90;
 PLAYER_ROTATION_SPEED :: 7;
 
 PISTOL_SHOT_COOLDOWN :: 0.4;
