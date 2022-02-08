@@ -18,6 +18,7 @@ Game :: struct {
 	keysPressed: [sdl.Scancode.NUM_SCANCODES] bool,
 
 	player: Player,
+	zombies: [dynamic] Zombie,
 	tilemap: Tilemap,
 
 	viewOffset: Vector2,
@@ -37,6 +38,7 @@ init_game :: proc(using game: ^Game) -> bool {
 	tilemap = parse_tilemap(game, "res/map/outside.json", OUTPUT_TILE_SIZE) or_return;
 	game.currentWorldDimensions = tilemap.dimensions * OUTPUT_TILE_SIZE;
 	player = create_player(game);
+	append(&zombies, create_zombie(game));
 	
 	init_spritesheet(&inventorySlotBackground, renderer, "res/ui/inventory_slot_background.png", { 0, 0 }, { 0, 0 }, 1, 1, nil, 0);
 	init_spritesheet(&inventorySlotBackgroundSelected, renderer, "res/ui/inventory_slot_background_selected.png", { 0, 0 }, { 0, 0 }, 1, 1, nil, 0);
@@ -89,6 +91,10 @@ update_game :: proc(using game: ^Game, deltaTime: f64) {
 	if state == .Playing {
 		update_player(&player, deltaTime);
 
+		for zombie in &zombies {
+			update_zombie(&zombie, deltaTime);
+		}
+		
 		// The view offset (basically a camera) tracks the player
 		viewOffset = player.worldPosition - (game.screenDimensions / 2.0);
 
@@ -111,6 +117,11 @@ draw_game :: proc(using game: ^Game) {
 
 	draw_tilemap(&tilemap, OUTPUT_TILE_SIZE, viewOffset);
 	draw_player(&player, viewOffset);
+
+	for zombie in &zombies {
+		draw_zombie(&zombie, viewOffset);
+	}
+	
 	draw_inventory_slots(game);
 	
 	sdl.RenderPresent(renderer);
