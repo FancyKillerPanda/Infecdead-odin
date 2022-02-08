@@ -56,8 +56,9 @@ Bullet :: struct {
 create_player :: proc(game: ^Game) -> (player: Player) {
 	player.game = game;
 	
-	player.worldPosition = { 100, 100 }; // This is temporary, until we have a proper starting spot
-	player.dimensions = { 96, 96 };
+	player.worldPosition = game.currentWorldDimensions / 2; // This is temporary, until we have a proper starting spot
+	// player.dimensions = { 96, 96 };
+	player.dimensions = { 64, 64 };
 
 	player.walkSpritesheet = new(Spritesheet);
 	init_spritesheet(player.walkSpritesheet, game.renderer, "res/player/player.png", player.dimensions, { 16, 16 }, 32, 4, nil, 0);

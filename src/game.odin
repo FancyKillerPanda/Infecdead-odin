@@ -34,9 +34,9 @@ GameState :: enum {
 init_game :: proc(using game: ^Game) -> bool {
 	create_window(game) or_return;
 	
-	player = create_player(game);
 	tilemap = parse_tilemap(game, "res/map/outside.json") or_return;
 	game.currentWorldDimensions = tilemap.dimensions * OUTPUT_TILE_SIZE;
+	player = create_player(game);
 	
 	init_spritesheet(&inventorySlotBackground, renderer, "res/ui/inventory_slot_background.png", { 0, 0 }, { 0, 0 }, 1, 1, nil, 0);
 	init_spritesheet(&inventorySlotBackgroundSelected, renderer, "res/ui/inventory_slot_background_selected.png", { 0, 0 }, { 0, 0 }, 1, 1, nil, 0);
