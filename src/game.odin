@@ -92,7 +92,7 @@ update_game :: proc(using game: ^Game, deltaTime: f64) {
 		update_player(&player, deltaTime);
 
 		for zombie in &zombies {
-			update_zombie(&zombie, deltaTime);
+			// update_zombie(&zombie, deltaTime);
 		}
 		
 		// The view offset (basically a camera) tracks the player

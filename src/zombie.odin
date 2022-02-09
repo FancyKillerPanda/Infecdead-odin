@@ -22,6 +22,8 @@ Zombie :: struct {
 
 	currentAnimationFrame: u32,
 	timeSinceLastFrameChange: f64,
+
+	health: f64,
 }
 
 create_zombie :: proc(game: ^Game) -> (zombie: Zombie) {
@@ -35,8 +37,14 @@ create_zombie :: proc(game: ^Game) -> (zombie: Zombie) {
 	init_spritesheet(zombie.walkSpritesheet, game.renderer, "res/enemies/zombie.png", zombie.dimensions, { 16, 16 }, 64, 8, nil, 0);
 
 	zombie.currentSpritesheet = zombie.walkSpritesheet;
+	zombie.health = 1.0;
 
 	return;
+}
+
+destory_zombie :: proc(using zombie: ^Zombie, zombieIndex: int) {
+	free(walkSpritesheet);
+	ordered_remove(&game.zombies, zombieIndex);
 }
 
 update_zombie :: proc(using zombie: ^Zombie, deltaTime: f64) {

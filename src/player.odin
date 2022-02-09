@@ -2,6 +2,7 @@ package main;
 
 import "core:fmt"
 import "core:math"
+import "core:math/rand"
 import "core:strings"
 
 import sdl "vendor:sdl2"
@@ -13,6 +14,8 @@ PLAYER_ROTATION_SPEED :: 7;
 PISTOL_SHOT_COOLDOWN :: 0.4;
 PISTOL_SHOT_VELOCITY :: 800;
 PISTOL_SHOT_LIFETIME :: 1.0;
+PISTOL_MIN_DAMAGE :: 0.2;
+PISTOL_MAX_DAMAGE :: 0.4;
 
 Vector2 :: [2] f64;
 
@@ -49,6 +52,7 @@ Bullet :: struct {
 	worldPosition: Vector2,
 	velocity: Vector2,
 	lifeTime: f64,
+	damage: f64,
 
 	spritesheet: ^Spritesheet,
 }
@@ -168,23 +172,53 @@ update_player :: proc(using player: ^Player, deltaTime: f64) {
 	// Shooting
 	timeSinceLastShot += deltaTime;
 
-	for i := 0; i < len(activeBullets); {
-		bullet := &activeBullets[i];
+	bulletLoop: for bulletIndex := 0; bulletIndex < len(activeBullets); {
+		bullet := &activeBullets[bulletIndex];
 		bullet.worldPosition += bullet.velocity * deltaTime;
 
 		bullet.lifeTime += deltaTime;
 		if bullet.lifeTime >= PISTOL_SHOT_LIFETIME {
-			destroy_bullet(player, i);
+			destroy_bullet(player, bulletIndex);
 			continue;
 		}
 
 		if bullet.worldPosition.x < 0 || bullet.worldPosition.y < 0 ||
 		   bullet.worldPosition.x > game.currentWorldDimensions.x || bullet.worldPosition.y > game.currentWorldDimensions.y {
-			destroy_bullet(player, i);
+			destroy_bullet(player, bulletIndex);
 			continue;
 		}
 
-		i += 1;
+		bulletRect: sdl.Rect = {
+			i32(bullet.worldPosition.x - (bullet.spritesheet.outputSize.x / 2)),
+			i32(bullet.worldPosition.y - (bullet.spritesheet.outputSize.y / 2)),
+			i32(bullet.spritesheet.outputSize.x),
+			i32(bullet.spritesheet.outputSize.y),
+		};
+
+		for zombieIndex := 0; zombieIndex < len(game.zombies); {
+			zombie := &game.zombies[zombieIndex];
+			zombieRect: sdl.Rect = {
+				i32(zombie.worldPosition.x - (zombie.dimensions.x / 2)),
+				i32(zombie.worldPosition.y - (zombie.dimensions.y / 2)),
+				i32(zombie.dimensions.x),
+				i32(zombie.dimensions.y),
+			};
+			
+			if sdl.HasIntersection(&bulletRect, &zombieRect) {
+				zombie.health -= bullet.damage;
+				if zombie.health <= 0.0 {
+					destory_zombie(zombie, zombieIndex);
+				}
+				
+				destroy_bullet(player, bulletIndex);
+
+				continue bulletLoop;
+			}
+
+			zombieIndex += 1;
+		}
+
+		bulletIndex += 1;
 	}
 	
 	// Texturing
@@ -238,6 +272,8 @@ create_pistol_bullet :: proc(using player: ^Player) -> (bullet: Bullet) {
 	bullet.spritesheet = new(Spritesheet);
 	init_spritesheet(bullet.spritesheet, game.renderer, "res/bullets/pistol_bullet.png", { 0, 0 }, { 0, 0 }, 1, 1, nil, 0);
 
+	bullet.damage = rand.float64_range(PISTOL_MIN_DAMAGE, PISTOL_MAX_DAMAGE);
+	
 	return;
 }
 
