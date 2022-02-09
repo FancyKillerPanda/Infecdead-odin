@@ -30,6 +30,7 @@ Game :: struct {
 
 GameState :: enum {
 	Playing,
+	Paused,
 }
 
 init_game :: proc(using game: ^Game) -> bool {
@@ -79,6 +80,20 @@ handle_events :: proc(using game: ^Game) {
 			case .KEYDOWN:
 				keysPressed[event.key.keysym.scancode] = true;
 
+				#partial switch event.key.keysym.scancode {
+					case .P:
+						if state == .Playing {
+							state = .Paused;
+						} else if state == .Paused {
+							state = .Playing;
+						}
+
+					case .ESCAPE:
+						if state == .Paused {
+							state = .Playing;
+						}
+				}
+
 			case .KEYUP:
 				keysPressed[event.key.keysym.scancode] = false;
 		}
@@ -124,6 +139,14 @@ draw_game :: proc(using game: ^Game) {
 	
 	draw_tilemap_second_pass(&tilemap, OUTPUT_TILE_SIZE, viewOffset);
 	draw_inventory_slots(game);
+
+	// Draws a dark overlay
+	if state == .Paused {
+		fillRect: sdl.Rect = { 0, 0, i32(screenDimensions.x), i32(screenDimensions.y) }
+		
+		sdl.SetRenderDrawColor(renderer, 50, 50, 50, 200);
+		sdl.RenderFillRect(renderer, &fillRect);
+	}
 	
 	sdl.RenderPresent(renderer);
 }
