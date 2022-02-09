@@ -107,15 +107,26 @@ add_tile_layer :: proc(using tilemap: ^Tilemap, layer: json.Object) {
 	}
 	
 	append(pass, [dynamic] i16 {});
-	reserve(&pass[len(pass^) - 1], int(dimensions.x * dimensions.y));
+	// reserve(&pass[len(pass^) - 1], int(dimensions.x * dimensions.y));
+	numberToSkip: i16;
 	
 	for tile in layer["data"].(json.Array) {
 		value := cast(i16) tile.(json.Integer);
 		if value <= 0 {
-			append(&pass[len(pass^) - 1], -1);
+			// append(&pass[len(pass^) - 1], -1);
+			numberToSkip += 1;
 		} else {
+			if numberToSkip > 0 {
+				append(&pass[len(pass^) - 1], -numberToSkip);
+				numberToSkip = 0;
+			}
+			
 			append(&pass[len(pass^) - 1], value - 1);
 		}
+	}
+
+	if numberToSkip > 0 {
+		append(&pass[len(pass^) - 1], -numberToSkip);
 	}
 }
 
@@ -220,9 +231,11 @@ draw_tilemap_internal :: proc(using tilemap: ^Tilemap, pass: [dynamic] [dynamic]
 			rect.x = (currentColumn * i32(outputTileDimensions.x)) - i32(offset.x);
 			rect.y = (currentRow * i32(outputTileDimensions.y)) - i32(offset.y);
 			
-			if value == -1 ||
-			   rect.x + rect.w <= 0 || rect.x >= i32(game.screenDimensions.x) ||
-			   rect.y + rect.h <= 0 || rect.y >= i32(game.screenDimensions.y) {
+			if value < 0 {
+				advance_position(&currentRow, &currentColumn, tilemap, -value);
+				continue;
+			} else if rect.x + rect.w <= 0 || rect.x >= i32(game.screenDimensions.x) ||
+					  rect.y + rect.h <= 0 || rect.y >= i32(game.screenDimensions.y) {
 				advance_position(&currentRow, &currentColumn, tilemap);
 				continue;
 			}
@@ -233,14 +246,15 @@ draw_tilemap_internal :: proc(using tilemap: ^Tilemap, pass: [dynamic] [dynamic]
 			sdl.RenderCopy(game.renderer, tileset.texture, &subrect, &rect);
 			advance_position(&currentRow, &currentColumn, tilemap);
 		}
+
 	}
 }
 
-advance_position :: proc(currentRow: ^i32, currentColumn: ^i32, tilemap: ^Tilemap) {
-	currentColumn^ += 1;
+advance_position :: proc(currentRow: ^i32, currentColumn: ^i32, tilemap: ^Tilemap, amount: i16 = 1) {
+	currentColumn^ += i32(amount);
 
-	if currentColumn^ == i32(tilemap.dimensions.x) {
-		currentColumn^ = 0;
+	for currentColumn^ >= i32(tilemap.dimensions.x) {
+		currentColumn^ -= i32(tilemap.dimensions.x);
 		currentRow^ += 1;
 	}
 }
