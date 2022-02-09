@@ -33,11 +33,11 @@ Zombie :: struct {
 	timeSinceLastDamageDealt: f64,
 }
 
-create_zombie :: proc(game: ^Game) -> (zombie: Zombie) {
+create_zombie :: proc(game: ^Game, position: Vector2) -> (zombie: Zombie) {
 	zombie.game = game;
 	
 	// TODO(fkp): Load this from the tilemap
-	zombie.worldPosition = game.currentWorldDimensions / 2;
+	zombie.worldPosition = position;
 	zombie.dimensions = { 64, 64 };
 
 	zombie.walkSpritesheet = new(Spritesheet);

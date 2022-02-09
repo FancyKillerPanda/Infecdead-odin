@@ -40,11 +40,12 @@ init_game :: proc(using game: ^Game) -> bool {
 	tilemap = parse_tilemap(game, "res/map/outside.json", OUTPUT_TILE_SIZE) or_return;
 	game.currentWorldDimensions = tilemap.dimensions * OUTPUT_TILE_SIZE;
 	player = create_player(game);
-	append(&zombies, create_zombie(game));
 	
 	init_spritesheet(&inventorySlotBackground, renderer, "res/ui/inventory_slot_background.png", { 0, 0 }, { 0, 0 }, 1, 1, nil, 0);
 	init_spritesheet(&inventorySlotBackgroundSelected, renderer, "res/ui/inventory_slot_background_selected.png", { 0, 0 }, { 0, 0 }, 1, 1, nil, 0);
 	init_spritesheet(&pistolIcon, renderer, "res/ui/pistol_icon.png", { 0, 0 }, { 0, 0 }, 1, 1, nil, 0);
+	
+	spawn_entities(&tilemap);
 	
 	running = true;
 	state = .Playing;

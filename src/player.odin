@@ -61,7 +61,6 @@ Bullet :: struct {
 create_player :: proc(game: ^Game) -> (player: Player) {
 	player.game = game;
 	
-	player.worldPosition = game.currentWorldDimensions / 2; // This is temporary, until we have a proper starting spot
 	// player.dimensions = { 96, 96 };
 	player.dimensions = { 64, 64 };
 

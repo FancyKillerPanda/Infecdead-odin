@@ -9,13 +9,16 @@ import sdl "vendor:sdl2"
 import img "vendor:sdl2/image"
 
 Tilemap :: struct {
+	game: ^Game,
 	dimensions: Vector2,
 	tileset: Tileset,
 
 	 // Holds data for each layer
 	renderDataFirstPass: [dynamic] [dynamic] i16,
 	renderDataSecondPass: [dynamic] [dynamic] i16,
+	
 	objects: [dynamic] sdl.Rect,
+	spawnPoints: [dynamic] SpawnPoint,
 };
 
 Tileset :: struct {
@@ -27,8 +30,19 @@ Tileset :: struct {
 	tilesPerRow: u32,
 }
 
-parse_tilemap :: proc(game: ^Game, filepath: string, outputTileSize: Vector2,) -> (tilemap: Tilemap, success: bool) {
+SpawnPoint :: struct {
+	entityType: EntityType,
+	worldPosition: Vector2,
+}
+
+EntityType :: enum {
+	Player,
+	Zombie,
+}
+
+parse_tilemap :: proc(game_: ^Game, filepath: string, outputTileSize: Vector2,) -> (tilemap: Tilemap, success: bool) {
 	using tilemap;
+	game = game_;
 
 	data, readSuccess := os.read_entire_file(filepath);
 	if !readSuccess {
@@ -60,48 +74,82 @@ parse_tilemap :: proc(game: ^Game, filepath: string, outputTileSize: Vector2,) -
 	clear(&renderDataSecondPass);
 
 	for layer, i in mainObject["layers"].(json.Array) { 
-		if layer.(json.Object)["type"].(json.String) == "tilelayer" {
-			// Determines whether this layer should be drawn before or after characters and such
-			pass := &renderDataFirstPass;
-			if layer.(json.Object)["properties"] != nil {
-				properties := layer.(json.Object)["properties"].(json.Array);
+		switch layer.(json.Object)["type"].(json.String) {
+			case "tilelayer":
+				add_tile_layer(&tilemap, layer.(json.Object));
 
-				for property in properties {
-					if property.(json.Object)["name"].(json.String) == "renderedAbove" && property.(json.Object)["value"].(json.Boolean) == true {
-						pass = &renderDataSecondPass;
-					}
+			case "objectgroup":
+				switch layer.(json.Object)["name"].(json.String) {
+					case "Collisions":
+						add_collisions_layer(&tilemap, outputTileSize, layer.(json.Object));
+
+					case "Spawn Points":
+						add_spawn_points(&tilemap, layer.(json.Object));
 				}
-			}
-			
-			append(pass, [dynamic] i16 {});
-			reserve(&pass[len(pass^) - 1], int(dimensions.x * dimensions.y));
-			
-			for tile in layer.(json.Object)["data"].(json.Array) {
-				value := cast(type_of(pass[i][0])) tile.(json.Integer);
-				if value <= 0 {
-					append(&pass[len(pass^) - 1], -1);
-				} else {
-					append(&pass[len(pass^) - 1], value - 1);
-				}
-			}
-		} else if layer.(json.Object)["type"].(json.String) == "objectgroup" {
-			scale := outputTileSize / tileset.tileDimensions;
-			objectValues := layer.(json.Object)["objects"].(json.Array);
-			reserve(&objects, len(objects) + len(objectValues));
-			
-			for value in objectValues {
-				append(&objects, sdl.Rect {
-					cast(i32) (f64(value.(json.Object)["x"].(json.Integer)) * scale.x),
-					cast(i32) (f64(value.(json.Object)["y"].(json.Integer)) * scale.y),
-					cast(i32) (f64(value.(json.Object)["width"].(json.Integer)) * scale.x),
-					cast(i32) (f64(value.(json.Object)["height"].(json.Integer)) * scale.y),
-				});
-			}
 		}
 	}
 
 	success = true;
 	return;
+}
+
+add_tile_layer :: proc(using tilemap: ^Tilemap, layer: json.Object) {
+	// Determines whether this layer should be drawn before or after characters and such
+	pass := &renderDataFirstPass;
+	if layer["properties"] != nil {
+		properties := layer["properties"].(json.Array);
+
+		for property in properties {
+			if property.(json.Object)["name"].(json.String) == "renderedAbove" && property.(json.Object)["value"].(json.Boolean) == true {
+				pass = &renderDataSecondPass;
+			}
+		}
+	}
+	
+	append(pass, [dynamic] i16 {});
+	reserve(&pass[len(pass^) - 1], int(dimensions.x * dimensions.y));
+	
+	for tile in layer["data"].(json.Array) {
+		value := cast(i16) tile.(json.Integer);
+		if value <= 0 {
+			append(&pass[len(pass^) - 1], -1);
+		} else {
+			append(&pass[len(pass^) - 1], value - 1);
+		}
+	}
+}
+
+add_collisions_layer :: proc(using tilemap: ^Tilemap, outputTileSize: Vector2, layer: json.Object) {
+	scale := outputTileSize / tileset.tileDimensions;
+	objectValues := layer["objects"].(json.Array);
+	reserve(&objects, len(objects) + len(objectValues));
+	
+	for value in objectValues {
+		append(&objects, sdl.Rect {
+			cast(i32) (f64(value.(json.Object)["x"].(json.Integer)) * scale.x),
+			cast(i32) (f64(value.(json.Object)["y"].(json.Integer)) * scale.y),
+			cast(i32) (f64(value.(json.Object)["width"].(json.Integer)) * scale.x),
+			cast(i32) (f64(value.(json.Object)["height"].(json.Integer)) * scale.y),
+		});
+	}
+}
+
+add_spawn_points :: proc(using tilemap: ^Tilemap, layer: json.Object) {
+	objectValues := layer["objects"].(json.Array);
+	reserve(&spawnPoints, len(spawnPoints) + len(objectValues));
+
+	for value in objectValues {
+		location: Vector2 = { f64(value.(json.Object)["x"].(json.Integer)), f64(value.(json.Object)["y"].(json.Integer)) };
+		worldPosition := (location * OUTPUT_TILE_SIZE) / tileset.tileDimensions;
+		entityType: EntityType;
+		
+		switch value.(json.Object)["name"].(json.String) {
+			case "Player": entityType = .Player;
+			case "Zombie": entityType = .Zombie;
+		}
+		
+		append(&spawnPoints, SpawnPoint { entityType, worldPosition });
+	}
 }
 
 parse_tileset :: proc(game_: ^Game, filepath: string) -> (tileset: Tileset, success: bool) {
@@ -180,7 +228,7 @@ draw_tilemap_internal :: proc(using tilemap: ^Tilemap, pass: [dynamic] [dynamic]
 			subrect.y = i32((value / i16(tileset.tilesPerRow)) * i16(tileset.tileDimensions.y));
 			
 			// TODO(fkp): Don't draw off the screen
-			sdl.RenderCopy(tileset.game.renderer, tileset.texture, &subrect, &rect);
+			sdl.RenderCopy(game.renderer, tileset.texture, &subrect, &rect);
 			advance_position(&currentRow, &currentColumn, tilemap);
 		}
 	}
@@ -192,5 +240,20 @@ advance_position :: proc(currentRow: ^i32, currentColumn: ^i32, tilemap: ^Tilema
 	if currentColumn^ == i32(tilemap.dimensions.x) {
 		currentColumn^ = 0;
 		currentRow^ += 1;
+	}
+}
+
+// This function will spawn zombies and other enemies, but only set the location
+// of the player (it assumes the player has already been initialised).
+spawn_entities :: proc(using tilemap: ^Tilemap) {
+	for spawnPoint in spawnPoints {
+		switch spawnPoint.entityType {
+			case .Player:
+				game.player.worldPosition = spawnPoint.worldPosition;
+
+			case .Zombie:
+				printf("Here\n");
+				append(&game.zombies, create_zombie(game, spawnPoint.worldPosition));
+		}
 	}
 }
