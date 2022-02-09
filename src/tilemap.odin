@@ -217,17 +217,19 @@ draw_tilemap_internal :: proc(using tilemap: ^Tilemap, pass: [dynamic] [dynamic]
 		currentColumn: i32;
 		
 		for value in layer {
-			if value == -1 {
+			rect.x = (currentColumn * i32(outputTileDimensions.x)) - i32(offset.x);
+			rect.y = (currentRow * i32(outputTileDimensions.y)) - i32(offset.y);
+			
+			if value == -1 ||
+			   rect.x + rect.w <= 0 || rect.x >= i32(game.screenDimensions.x) ||
+			   rect.y + rect.h <= 0 || rect.y >= i32(game.screenDimensions.y) {
 				advance_position(&currentRow, &currentColumn, tilemap);
 				continue;
 			}
 
-			rect.x = (currentColumn * i32(outputTileDimensions.x)) - i32(offset.x);
-			rect.y = (currentRow * i32(outputTileDimensions.y)) - i32(offset.y);
 			subrect.x = i32((value % i16(tileset.tilesPerRow)) * i16(tileset.tileDimensions.x));
 			subrect.y = i32((value / i16(tileset.tilesPerRow)) * i16(tileset.tileDimensions.y));
 			
-			// TODO(fkp): Don't draw off the screen
 			sdl.RenderCopy(game.renderer, tileset.texture, &subrect, &rect);
 			advance_position(&currentRow, &currentColumn, tilemap);
 		}
