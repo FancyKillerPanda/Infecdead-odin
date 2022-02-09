@@ -258,6 +258,19 @@ draw_player :: proc(using player: ^Player, viewOffset: Vector2) {
 	}
 }
 
+draw_player_on_minimap :: proc(using player: ^Player, minimapPosition: Vector2) {
+	minimapPlayerRect: sdl.Rect = {
+		// -1 to centre the rect
+		i32(minimapPosition.x + (player.worldPosition.x * MINIMAP_TILE_SIZE.x / OUTPUT_TILE_SIZE.x) - 1),
+		i32(minimapPosition.y + (player.worldPosition.y * MINIMAP_TILE_SIZE.y / OUTPUT_TILE_SIZE.y) - 1),
+		i32(MINIMAP_TILE_SIZE.x * 3),
+		i32(MINIMAP_TILE_SIZE.y * 3),
+	};
+	
+	sdl.SetRenderDrawColor(game.renderer, 0, 0, 255, 255);
+	sdl.RenderFillRect(game.renderer, &minimapPlayerRect);
+}
+
 shoot :: proc(using player: ^Player) {
 	if inventorySlots[currentlySelectedInventorySlot] == .Pistol {
 		if timeSinceLastShot >= PISTOL_SHOT_COOLDOWN {

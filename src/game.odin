@@ -5,6 +5,7 @@ import "core:time"
 import sdl "vendor:sdl2"
 
 OUTPUT_TILE_SIZE: Vector2 : { 32, 32 };
+MINIMAP_TILE_SIZE: Vector2 : { 2, 2 };
 
 Game :: struct {
 	running: bool,
@@ -139,6 +140,22 @@ draw_game :: proc(using game: ^Game) {
 	
 	draw_tilemap_second_pass(&tilemap, OUTPUT_TILE_SIZE, viewOffset);
 	draw_inventory_slots(game);
+
+	// Draws the minimap
+	minimapPosition: Vector2 = { screenDimensions.x * 89 / 100, screenDimensions.y * 1 / 100 };
+	minimapRect: sdl.Rect = {
+		i32(minimapPosition.x),
+		i32(minimapPosition.y),
+		i32(MINIMAP_TILE_SIZE.x * tilemap.dimensions.x),
+		i32(MINIMAP_TILE_SIZE.y * tilemap.dimensions.y),
+	};
+
+	draw_tilemap_first_pass(&tilemap, MINIMAP_TILE_SIZE, -minimapPosition);
+	draw_tilemap_second_pass(&tilemap, MINIMAP_TILE_SIZE, -minimapPosition);
+	draw_player_on_minimap(&player, minimapPosition);
+
+	sdl.SetRenderDrawColor(renderer, 0, 0, 0, 255);
+	sdl.RenderDrawRect(renderer, &minimapRect);
 
 	// Draws a dark overlay
 	if state == .Paused {
