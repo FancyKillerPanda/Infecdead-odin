@@ -1,11 +1,15 @@
 package main;
 
 import "core:math"
+import "core:math/rand"
 
 import sdl "vendor:sdl2"
 
 ZOMBIE_WALK_ACC :: 600;
 ZOMBIE_FRICTION :: 0.90;
+ZOMBIE_MIN_DAMAGE :: 0.1;
+ZOMBIE_MAX_DAMAGE :: 0.2;
+ZOMBIE_DAMAGE_COOLDOWN :: 0.5;
 
 HEALTH_BAR_HEIGHT :: 10;
 
@@ -26,6 +30,7 @@ Zombie :: struct {
 	timeSinceLastFrameChange: f64,
 
 	health: f64,
+	timeSinceLastDamageDealt: f64,
 }
 
 create_zombie :: proc(game: ^Game) -> (zombie: Zombie) {
@@ -98,6 +103,23 @@ update_zombie :: proc(using zombie: ^Zombie, deltaTime: f64) {
 	worldPosition.x = clamp(worldPosition.x, dimensions.x / 2.0, (game.tilemap.dimensions.x * OUTPUT_TILE_SIZE.x) - (dimensions.x / 2.0));
 	worldPosition.y = clamp(worldPosition.y, dimensions.y / 2.0, (game.tilemap.dimensions.y * OUTPUT_TILE_SIZE.y) - (dimensions.y / 2.0));
 	
+	// Checks for collision with player
+	timeSinceLastDamageDealt += deltaTime;
+	worldPositionRect.x = i32(worldPosition.x - (dimensions.x / 2.0));
+	worldPositionRect.y = i32(worldPosition.y - (dimensions.y / 4.0));
+
+	playerRect: sdl.Rect = {
+		i32(game.player.worldPosition.x - (game.player.dimensions.x / 2)),
+		i32(game.player.worldPosition.y - (game.player.dimensions.y / 2)),
+		i32(game.player.dimensions.x / 2),
+		i32(game.player.dimensions.y / 2),
+	};
+
+	if timeSinceLastDamageDealt >= ZOMBIE_DAMAGE_COOLDOWN && sdl.HasIntersection(&worldPositionRect, &playerRect) {
+		timeSinceLastDamageDealt = 0;
+		take_damage(&game.player, rand.float64_range(ZOMBIE_MIN_DAMAGE, ZOMBIE_MAX_DAMAGE));
+	}
+
 	// Texturing
 	timeSinceLastFrameChange += deltaTime;
 	if timeSinceLastFrameChange >= 0.15 {

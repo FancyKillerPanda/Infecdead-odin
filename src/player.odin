@@ -40,6 +40,8 @@ Player :: struct {
 
 	activeBullets: [dynamic] Bullet,
 	timeSinceLastShot: f64,
+
+	health: f64,
 }
 
 InventoryItem :: enum {
@@ -73,6 +75,8 @@ create_player :: proc(game: ^Game) -> (player: Player) {
 	// TODO(fkp): Make the player pick this up somewhere
 	player.inventorySlots[1] = .Pistol;
 	player.currentlySelectedInventorySlot = 1;
+
+	player.health = 1.0;
 
 	return;
 }
@@ -260,6 +264,15 @@ shoot :: proc(using player: ^Player) {
 			timeSinceLastShot = 0;
 			append(&activeBullets, create_pistol_bullet(player));
 		}
+	}
+}
+
+take_damage :: proc(using player: ^Player, damage: f64) {
+	health -= damage;
+
+	if health <= 0 {
+		printf("You died.\n");
+		return;
 	}
 }
 
