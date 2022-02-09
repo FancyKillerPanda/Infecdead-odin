@@ -11,7 +11,10 @@ import img "vendor:sdl2/image"
 Tilemap :: struct {
 	dimensions: Vector2,
 	tileset: Tileset,
-	mapData: [dynamic] [dynamic] i16, // Holds data for each layer
+
+	 // Holds data for each layer
+	renderDataFirstPass: [dynamic] [dynamic] i16,
+	renderDataSecondPass: [dynamic] [dynamic] i16,
 	objects: [dynamic] sdl.Rect,
 };
 
@@ -53,19 +56,32 @@ parse_tilemap :: proc(game: ^Game, filepath: string, outputTileSize: Vector2,) -
 	tilesetFilepath := core_filepath.join(core_filepath.dir(filepath), mainObject["tilesets"].(json.Array)[0].(json.Object)["source"].(json.String));
 	tileset = parse_tileset(game, tilesetFilepath) or_return;
 
-	clear(&mapData);
+	clear(&renderDataFirstPass);
+	clear(&renderDataSecondPass);
 
 	for layer, i in mainObject["layers"].(json.Array) { 
 		if layer.(json.Object)["type"].(json.String) == "tilelayer" {
-			append(&mapData, [dynamic] i16 {});
-			reserve(&mapData[i], int(dimensions.x * dimensions.y));
+			// Determines whether this layer should be drawn before or after characters and such
+			pass := &renderDataFirstPass;
+			if layer.(json.Object)["properties"] != nil {
+				properties := layer.(json.Object)["properties"].(json.Array);
+
+				for property in properties {
+					if property.(json.Object)["name"].(json.String) == "renderedAbove" && property.(json.Object)["value"].(json.Boolean) == true {
+						pass = &renderDataSecondPass;
+					}
+				}
+			}
+			
+			append(pass, [dynamic] i16 {});
+			reserve(&pass[len(pass^) - 1], int(dimensions.x * dimensions.y));
 			
 			for tile in layer.(json.Object)["data"].(json.Array) {
-				value := cast(type_of(mapData[i][0])) tile.(json.Integer);
+				value := cast(type_of(pass[i][0])) tile.(json.Integer);
 				if value <= 0 {
-					append(&mapData[i], -1);
+					append(&pass[len(pass^) - 1], -1);
 				} else {
-					append(&mapData[i], value - 1);
+					append(&pass[len(pass^) - 1], value - 1);
 				}
 			}
 		} else if layer.(json.Object)["type"].(json.String) == "objectgroup" {
@@ -136,11 +152,19 @@ parse_tileset :: proc(game_: ^Game, filepath: string) -> (tileset: Tileset, succ
 	return;
 }
 
-draw_tilemap :: proc(using tilemap: ^Tilemap, outputTileDimensions: Vector2, offset: Vector2) {
+draw_tilemap_first_pass :: proc(using tilemap: ^Tilemap, outputTileDimensions: Vector2, offset: Vector2) {
+	draw_tilemap_internal(tilemap, renderDataFirstPass, outputTileDimensions, offset);
+}
+
+draw_tilemap_second_pass :: proc(using tilemap: ^Tilemap, outputTileDimensions: Vector2, offset: Vector2) {
+	draw_tilemap_internal(tilemap, renderDataSecondPass, outputTileDimensions, offset);
+}
+
+draw_tilemap_internal :: proc(using tilemap: ^Tilemap, pass: [dynamic] [dynamic] i16, outputTileDimensions: Vector2, offset: Vector2) {
 	rect: sdl.Rect = { 0, 0, i32(outputTileDimensions.x), i32(outputTileDimensions.y) };
 	subrect: sdl.Rect = { 0, 0, i32(tileset.tileDimensions.x), i32(tileset.tileDimensions.y) };
 
-	for layer in mapData {
+	for layer in pass {
 		currentRow: i32;
 		currentColumn: i32;
 		

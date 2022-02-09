@@ -115,13 +115,14 @@ draw_game :: proc(using game: ^Game) {
 	sdl.SetRenderDrawColor(renderer, 192, 192, 192, 255);
 	sdl.RenderClear(renderer);
 
-	draw_tilemap(&tilemap, OUTPUT_TILE_SIZE, viewOffset);
+	draw_tilemap_first_pass(&tilemap, OUTPUT_TILE_SIZE, viewOffset);
 	draw_player(&player, viewOffset);
 
 	for zombie in &zombies {
 		draw_zombie(&zombie, viewOffset);
 	}
 	
+	draw_tilemap_second_pass(&tilemap, OUTPUT_TILE_SIZE, viewOffset);
 	draw_inventory_slots(game);
 	
 	sdl.RenderPresent(renderer);
