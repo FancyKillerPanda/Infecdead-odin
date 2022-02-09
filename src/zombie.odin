@@ -59,7 +59,7 @@ update_zombie :: proc(using zombie: ^Zombie, deltaTime: f64) {
 	deltaToPlayer := game.player.worldPosition - worldPosition;
 	rotationRadians := math.atan2_f64(-deltaToPlayer.y, deltaToPlayer.x);
 
-	rotation = math.mod_f64(360.0 - math.to_degrees_f64(rotationRadians), 360.0);
+	rotation = math.mod_f64(3600.0 + math.to_degrees_f64(rotationRadians), 360.0);
 	sinRotation := math.sin_f64(rotationRadians);
 	cosRotation := math.cos_f64(rotationRadians);
 	
