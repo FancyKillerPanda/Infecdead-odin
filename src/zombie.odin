@@ -5,7 +5,7 @@ import "core:math/rand"
 
 import sdl "vendor:sdl2"
 
-ZOMBIE_WALK_ACC :: 600;
+ZOMBIE_WALK_ACC :: 300;
 ZOMBIE_FRICTION :: 0.90;
 ZOMBIE_MIN_DAMAGE :: 0.1;
 ZOMBIE_MAX_DAMAGE :: 0.2;

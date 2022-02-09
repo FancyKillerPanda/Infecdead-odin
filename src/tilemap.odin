@@ -252,7 +252,6 @@ spawn_entities :: proc(using tilemap: ^Tilemap) {
 				game.player.worldPosition = spawnPoint.worldPosition;
 
 			case .Zombie:
-				printf("Here\n");
 				append(&game.zombies, create_zombie(game, spawnPoint.worldPosition));
 		}
 	}
