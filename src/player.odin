@@ -44,9 +44,19 @@ Player :: struct {
 	health: f64,
 }
 
-InventoryItem :: enum {
-	Empty,
-	Pistol,
+InventoryItem :: struct {
+	type: enum {
+		Empty,
+		Pistol,
+	},
+
+	data: union {
+		PistolData,
+	},
+}
+
+PistolData :: struct {
+	bulletsLeft: u32,
 }
 
 Bullet :: struct {
@@ -72,7 +82,8 @@ create_player :: proc(game: ^Game) -> (player: Player) {
 	player.currentSpritesheet = player.walkWithPistolSpritesheet;
 
 	// TODO(fkp): Make the player pick this up somewhere
-	player.inventorySlots[1] = .Pistol;
+	player.inventorySlots[1].type = .Pistol;
+	player.inventorySlots[1].data = PistolData { bulletsLeft = 5 };
 	player.currentlySelectedInventorySlot = 1;
 
 	player.health = 1.0;
@@ -227,9 +238,9 @@ update_player :: proc(using player: ^Player, deltaTime: f64) {
 	
 	// Texturing
 	// update_spritesheet(player.currentSpritesheet, deltaTime);
-	if inventorySlots[currentlySelectedInventorySlot] == .Empty {
+	if inventorySlots[currentlySelectedInventorySlot].type == .Empty {
 		currentSpritesheet = walkSpritesheet;
-	} else if inventorySlots[currentlySelectedInventorySlot] == .Pistol {
+	} else if inventorySlots[currentlySelectedInventorySlot].type == .Pistol {
 		currentSpritesheet = walkWithPistolSpritesheet;
 	}
 	
@@ -271,10 +282,16 @@ draw_player_on_minimap :: proc(using player: ^Player, minimapPosition: Vector2) 
 }
 
 shoot :: proc(using player: ^Player) {
-	if inventorySlots[currentlySelectedInventorySlot] == .Pistol {
-		if timeSinceLastShot >= PISTOL_SHOT_COOLDOWN {
-			timeSinceLastShot = 0;
-			append(&activeBullets, create_pistol_bullet(player));
+	if inventorySlots[currentlySelectedInventorySlot].type == .Pistol {
+		if inventorySlots[currentlySelectedInventorySlot].data.(PistolData).bulletsLeft > 0 {
+			if timeSinceLastShot >= PISTOL_SHOT_COOLDOWN {
+				timeSinceLastShot = 0;
+				(&inventorySlots[currentlySelectedInventorySlot].data.(PistolData)).bulletsLeft -= 1;
+
+				append(&activeBullets, create_pistol_bullet(player));
+			}
+		} else {
+			printf("Magazine is empty!\n");
 		}
 	}
 }

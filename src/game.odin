@@ -191,7 +191,7 @@ draw_inventory_slots :: proc(using game: ^Game) {
 			draw_spritesheet(&inventorySlotBackground, { x, y });
 		}
 
-		switch player.inventorySlots[i] {
+		switch player.inventorySlots[i].type {
 			case .Empty:
 				// Do nothing
 
