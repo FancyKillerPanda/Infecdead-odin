@@ -16,8 +16,7 @@ PISTOL_SHOT_VELOCITY :: 800;
 PISTOL_SHOT_LIFETIME :: 1.0;
 PISTOL_MIN_DAMAGE :: 0.2;
 PISTOL_MAX_DAMAGE :: 0.4;
-
-Vector2 :: [2] f64;
+PISTOL_KNOCKBACK :: 5;
 
 Player :: struct {
 	game: ^Game,
@@ -208,8 +207,10 @@ update_player :: proc(using player: ^Player, deltaTime: f64) {
 				zombie.health -= bullet.damage;
 				if zombie.health <= 0.0 {
 					destory_zombie(zombie, zombieIndex);
+				} else {
+					zombie.worldPosition += vec2_normalise(bullet.velocity) * PISTOL_KNOCKBACK;
 				}
-				
+
 				destroy_bullet(player, bulletIndex);
 
 				continue bulletLoop;

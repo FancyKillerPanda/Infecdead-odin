@@ -1,10 +1,13 @@
 package main
 
 import "core:fmt"
+import "core:math"
 
 import sdl "vendor:sdl2"
 import img "vendor:sdl2/image"
 import ttf "vendor:sdl2/ttf"
+
+Vector2 :: [2] f64;
 
 printf :: fmt.printf;
 
@@ -46,4 +49,12 @@ quit_dependencies :: proc() {
 	ttf.Quit();
 	img.Quit();
 	sdl.Quit();
+}
+
+vec2_normalise :: proc(vec: Vector2) -> Vector2 {
+	return vec / vec2_length(vec);
+}
+
+vec2_length :: proc(vec: Vector2) -> f64 {
+	return math.sqrt_f64((vec.x * vec.x) + (vec.y * vec.y));
 }
