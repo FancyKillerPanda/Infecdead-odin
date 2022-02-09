@@ -55,6 +55,8 @@ init_game :: proc(using game: ^Game) -> bool {
 
 run_game :: proc(using game: ^Game) {
 	lastTime := time.now();
+	frameTimeAverageStart := time.now();
+	frameTimeAverageCount := 0;
 	
 	for running {
 		handle_events(game);
@@ -68,6 +70,15 @@ run_game :: proc(using game: ^Game) {
 		}
 		
 		draw_game(game);
+		
+		frameTimeAverageCount += 1;
+		if frameTimeAverageCount == 30 {
+			frameTimeAverage := (f64(time.diff(frameTimeAverageStart, time.now())) / f64(time.Millisecond)) / f64(frameTimeAverageCount);
+			printf("Frame: %d ms (%d FPS)\n", i64(frameTimeAverage), i64(1000.0 / frameTimeAverage));
+
+			frameTimeAverageStart = time.now();
+			frameTimeAverageCount = 0;
+		}
 	}
 }
 
