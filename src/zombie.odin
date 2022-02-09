@@ -7,6 +7,8 @@ import sdl "vendor:sdl2"
 ZOMBIE_WALK_ACC :: 600;
 ZOMBIE_FRICTION :: 0.90;
 
+HEALTH_BAR_HEIGHT :: 10;
+
 Zombie :: struct {
 	game: ^Game,
 
@@ -114,5 +116,27 @@ update_zombie :: proc(using zombie: ^Zombie, deltaTime: f64) {
 }
 
 draw_zombie :: proc(using zombie: ^Zombie, viewOffset: Vector2) {
-	draw_spritesheet(zombie.currentSpritesheet, zombie.worldPosition - viewOffset);
+	draw_spritesheet(currentSpritesheet, worldPosition - viewOffset);
+
+	if health < 1.0 {
+		fullHealthBarRect: sdl.Rect = {
+			i32(worldPosition.x - viewOffset.x - (dimensions.x / 2)),
+			i32((worldPosition.y - viewOffset.y - (dimensions.y / 2)) - (HEALTH_BAR_HEIGHT * 2)),
+			i32(dimensions.x),
+			i32(HEALTH_BAR_HEIGHT),
+		}
+
+		healthBarRect: sdl.Rect = {
+			fullHealthBarRect.x,
+			fullHealthBarRect.y,
+			i32(f64(fullHealthBarRect.w) * health),
+			fullHealthBarRect.h,
+		};
+
+		
+		sdl.SetRenderDrawColor(game.renderer, 0, 255, 0, 255);
+		sdl.RenderFillRect(game.renderer, &healthBarRect);
+		sdl.SetRenderDrawColor(game.renderer, 0, 0, 0, 255);
+		sdl.RenderDrawRect(game.renderer, &fullHealthBarRect);
+	}
 }
