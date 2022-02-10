@@ -48,9 +48,15 @@ draw_chests :: proc(game: ^Game, viewOffset: Vector2) {
 
 			draw_spritesheet(&chestContentsIconBackground, iconPosition);
 			
-			#partial switch chest.contents.type {
+			switch chest.contents.type {
+				case .Empty:
+					// Do nothing
+
 				case .Pistol:
 					draw_spritesheet(&game.pistolIcon, iconPosition);
+				
+				case .MedKit:
+					draw_spritesheet(&game.medKitIcon, iconPosition);
 				}
 		} else {
 			spritesheet_set_frame(&chestSpritesheet, 0);

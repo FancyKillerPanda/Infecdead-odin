@@ -350,9 +350,18 @@ spawn_chests :: proc(using tilemap: ^Tilemap) {
 		#partial switch spawnPoint.entityType {
 			case .Chest:
 				contents: InventoryItem;
-				if spawnPoint.properties["name"] == "contents" && spawnPoint.properties["value"] == "pistol" {
-					contents.type = .Pistol;
-					contents.data = PistolData { bulletsLeft = 16, };
+				if spawnPoint.properties["name"] == "contents" {
+					switch spawnPoint.properties["value"] {
+						case "pistol":
+							contents.type = .Pistol;
+							contents.data = PistolData { bulletsLeft = 16, };
+						
+						case "med_kit":
+							contents.type = .MedKit;
+
+						case:
+							assert(false, "Tilemap chest has unknown item.");
+					}
 				}
 			
 				append(&game.chests, Chest { open = false, contents = contents, worldPosition = spawnPoint.worldPosition });

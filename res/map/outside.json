@@ -247,6 +247,17 @@
                  "width":16,
                  "x":768,
                  "y":688
+                }, 
+                {
+                 "height":16,
+                 "id":30,
+                 "name":"Chest",
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":16,
+                 "x":864,
+                 "y":688
                 }],
          "opacity":1,
          "type":"objectgroup",
@@ -300,6 +311,24 @@
                  "width":0,
                  "x":768,
                  "y":688
+                }, 
+                {
+                 "height":0,
+                 "id":29,
+                 "name":"Chest",
+                 "point":true,
+                 "properties":[
+                        {
+                         "name":"contents",
+                         "type":"string",
+                         "value":"med_kit"
+                        }],
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":0,
+                 "x":864,
+                 "y":688
                 }],
          "opacity":1,
          "type":"objectgroup",
@@ -308,7 +337,7 @@
          "y":0
         }],
  "nextlayerid":11,
- "nextobjectid":28,
+ "nextobjectid":31,
  "orientation":"orthogonal",
  "renderorder":"right-down",
  "tiledversion":"1.7.2",

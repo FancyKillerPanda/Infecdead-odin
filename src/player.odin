@@ -51,6 +51,7 @@ InventoryItem :: struct {
 	type: enum {
 		Empty,
 		Pistol,
+		MedKit,
 	},
 
 	data: union {
