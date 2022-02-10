@@ -364,7 +364,7 @@ spawn_chests :: proc(using tilemap: ^Tilemap) {
 					}
 				}
 			
-				append(&game.chests, Chest { open = false, contents = contents, worldPosition = spawnPoint.worldPosition });
+				append(&game.chests, Chest { isOpen = false, contents = contents, worldPosition = spawnPoint.worldPosition });
 		}
 	}
 }

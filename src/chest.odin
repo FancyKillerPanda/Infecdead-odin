@@ -3,7 +3,7 @@ package main;
 import sdl "vendor:sdl2"
 
 Chest :: struct {
-	open: bool,
+	isOpen: bool,
 	contents: InventoryItem,
 	worldPosition: Vector2,
 }
@@ -31,16 +31,16 @@ update_chests :: proc(using game: ^Game) {
 		chestRect := create_sdl_rect(chest.worldPosition, OUTPUT_TILE_SIZE);
 
 		if sdl.HasIntersection(&playerWorldPositionRect, &chestRect) {
-			chest.open = true;
+			chest.isOpen = true;
 		} else {
-			chest.open = false;
+			chest.isOpen = false;
 		}
 	}
 }
 
 draw_chests :: proc(game: ^Game, viewOffset: Vector2) {
 	for chest in game.chests {
-		if chest.open {
+		if chest.isOpen {
 			spritesheet_set_frame(&chestSpritesheet, 1);
 
 			iconPosition := chest.worldPosition - viewOffset;

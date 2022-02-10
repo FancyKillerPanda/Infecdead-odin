@@ -103,7 +103,11 @@ handle_player_events :: proc(using player: ^Player, event: ^sdl.Event) {
 				case .NUM2: fallthrough;
 				case .NUM3: fallthrough;
 				case .NUM4:
-					player.currentlySelectedInventorySlot = u32(event.key.keysym.scancode - sdl.Scancode.NUM1);
+					currentlySelectedInventorySlot = u32(event.key.keysym.scancode - sdl.Scancode.NUM1);
+					swap_current_slot_with_chest(player);
+
+				case .E:
+					swap_current_slot_with_chest(player);
 			}
 
 		case .MOUSEWHEEL:
@@ -338,6 +342,16 @@ get_player_world_rect :: proc(using player: ^Player) -> (rect: sdl.Rect) {
 	};
 
 	return;
+}
+
+swap_current_slot_with_chest :: proc(using player: ^Player) {
+	for chest in &game.chests {
+		if chest.isOpen {
+			temp := inventorySlots[currentlySelectedInventorySlot];
+			inventorySlots[currentlySelectedInventorySlot] = chest.contents;
+			chest.contents = temp;
+		}
+	}
 }
 
 create_pistol_bullet :: proc(using player: ^Player) -> (bullet: Bullet) {
