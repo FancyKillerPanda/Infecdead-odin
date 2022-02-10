@@ -58,3 +58,12 @@ vec2_normalise :: proc(vec: Vector2) -> Vector2 {
 vec2_length :: proc(vec: Vector2) -> f64 {
 	return math.sqrt_f64((vec.x * vec.x) + (vec.y * vec.y));
 }
+
+create_sdl_rect :: proc(position: Vector2, dimensions: Vector2) -> (rect: sdl.Rect) {
+	rect.x = i32(position.x);
+	rect.y = i32(position.y);
+	rect.w = i32(dimensions.x);
+	rect.h = i32(dimensions.y);
+
+	return;
+}

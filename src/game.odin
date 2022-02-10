@@ -156,7 +156,7 @@ draw_game :: proc(using game: ^Game) {
 	
 	// Draws a dark overlay
 	if state == .Paused {
-		fillRect: sdl.Rect = { 0, 0, i32(screenDimensions.x), i32(screenDimensions.y) }
+		fillRect := create_sdl_rect(Vector2 { 0, 0 }, screenDimensions);
 		
 		sdl.SetRenderDrawColor(renderer, 50, 50, 50, 200);
 		sdl.RenderFillRect(renderer, &fillRect);

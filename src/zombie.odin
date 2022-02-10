@@ -107,13 +107,7 @@ update_zombie :: proc(using zombie: ^Zombie, deltaTime: f64) {
 	timeSinceLastDamageDealt += deltaTime;
 	worldPositionRect.x = i32(worldPosition.x - (dimensions.x / 2.0));
 	worldPositionRect.y = i32(worldPosition.y - (dimensions.y / 4.0));
-
-	playerRect: sdl.Rect = {
-		i32(game.player.worldPosition.x - (game.player.dimensions.x / 2)),
-		i32(game.player.worldPosition.y - (game.player.dimensions.y / 2)),
-		i32(game.player.dimensions.x / 2),
-		i32(game.player.dimensions.y / 2),
-	};
+	playerRect := create_sdl_rect(game.player.worldPosition - (game.player.dimensions / 2), game.player.dimensions / 2);
 
 	if timeSinceLastDamageDealt >= ZOMBIE_DAMAGE_COOLDOWN && sdl.HasIntersection(&worldPositionRect, &playerRect) {
 		timeSinceLastDamageDealt = 0;

@@ -201,12 +201,7 @@ update_player :: proc(using player: ^Player, deltaTime: f64) {
 			continue;
 		}
 
-		bulletRect: sdl.Rect = {
-			i32(bullet.worldPosition.x - (bullet.spritesheet.outputSize.x / 2)),
-			i32(bullet.worldPosition.y - (bullet.spritesheet.outputSize.y / 2)),
-			i32(bullet.spritesheet.outputSize.x),
-			i32(bullet.spritesheet.outputSize.y),
-		};
+		bulletRect := create_sdl_rect(bullet.worldPosition - bullet.spritesheet.outputSize, bullet.spritesheet.outputSize);
 
 		for zombieIndex := 0; zombieIndex < len(game.zombies); {
 			zombie := &game.zombies[zombieIndex];

@@ -68,13 +68,9 @@ update_spritesheet :: proc(using spritesheet: ^Spritesheet, deltaTime: f64) {
 }
 
 draw_spritesheet :: proc(using spritesheet: ^Spritesheet, position: Vector2, rotation: f64 = 0, horizontalFlip := false, verticalFlip := false) {
-	rect: sdl.Rect;
-	rect.x = i32(position.x - (outputSize.x / 2));
-	rect.y = i32(position.y - (outputSize.y / 2));
-	rect.w = i32(outputSize.x);
-	rect.h = i32(outputSize.y);
-	
+	rect := create_sdl_rect(position - (outputSize / 2), outputSize);
 	subrect: sdl.Rect;
+
 	if animationOrder == nil {
 		subrect = get_spritesheet_subrect(spritesheet, animationCurrentIndex);
 	} else {
@@ -114,10 +110,5 @@ get_spritesheet_subrect :: proc(using spritesheet: ^Spritesheet, subrectIndex: u
 	subrectRow := subrectIndex / subrectsPerRow;
 	subrectCol := subrectIndex % subrectsPerRow;
 	
-	return sdl.Rect {
-		i32(subrectCol * u32(subrectDimensions.x)),
-		i32(subrectRow * u32(subrectDimensions.y)),
-		i32(subrectDimensions.x),
-		i32(subrectDimensions.y),
-	};
+	return create_sdl_rect(Vector2 { f64(subrectCol), f64(subrectRow) } * subrectDimensions, subrectDimensions);
 }
