@@ -38,7 +38,7 @@ Tileset :: struct {
 SpawnPoint :: struct {
 	entityType: EntityType,
 	worldPosition: Vector2,
-	properties: [dynamic] json.Object,
+	properties: map[string] string,
 }
 
 EntityType :: enum {
@@ -174,7 +174,7 @@ add_spawn_points :: proc(using tilemap: ^Tilemap, layer: json.Object) {
 		location: Vector2 = { f64(value.(json.Object)["x"].(json.Integer)), f64(value.(json.Object)["y"].(json.Integer)) };
 		worldPosition := (location * OUTPUT_TILE_SIZE) / tileset.tileDimensions;
 		entityType: EntityType;
-		properties: [dynamic] json.Object;
+		properties: map[string] string;
 		
 		switch value.(json.Object)["name"].(json.String) {
 			case "Player":entityType = .Player;
@@ -184,7 +184,9 @@ add_spawn_points :: proc(using tilemap: ^Tilemap, layer: json.Object) {
 				entityType = .Chest;
 				
 				for property in value.(json.Object)["properties"].(json.Array) {
-					append(&properties, property.(json.Object));
+					for key in property.(json.Object) {
+						properties[key] = property.(json.Object)[key].(json.String);
+					}
 				}
 		}
 		
@@ -348,13 +350,11 @@ spawn_chests :: proc(using tilemap: ^Tilemap) {
 		#partial switch spawnPoint.entityType {
 			case .Chest:
 				contents: InventoryItem;
-				for property in spawnPoint.properties {
-					if property["contents"] != nil && property["contents"].(json.String) == "pistol" {
-						contents.type = .Pistol;
-						contents.data = PistolData { bulletsLeft = 16, };
-					}
+				if spawnPoint.properties["name"] == "contents" && spawnPoint.properties["value"] == "pistol" {
+					contents.type = .Pistol;
+					contents.data = PistolData { bulletsLeft = 16, };
 				}
-				
+			
 				append(&game.chests, Chest { open = false, contents = contents, worldPosition = spawnPoint.worldPosition });
 		}
 	}

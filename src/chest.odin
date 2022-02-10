@@ -9,9 +9,11 @@ Chest :: struct {
 }
 
 chestSpritesheet: Spritesheet;
+chestContentsIconBackground: Spritesheet;
 
 init_chests :: proc(game: ^Game) {
 	init_spritesheet(&chestSpritesheet, game.renderer, "res/objects/chest.png", OUTPUT_TILE_SIZE, { 16, 16 }, 2, 2, nil, 0);
+	init_spritesheet(&chestContentsIconBackground, game.renderer, "res/ui/chest_contents_icon_background.png", { 0, 0 }, { 0, 0 }, 1, 1, nil, 0);
 	spawn_chests(&game.tilemap);
 }
 
@@ -40,6 +42,16 @@ draw_chests :: proc(game: ^Game, viewOffset: Vector2) {
 	for chest in game.chests {
 		if chest.open {
 			spritesheet_set_frame(&chestSpritesheet, 1);
+
+			iconPosition := chest.worldPosition - viewOffset;
+			iconPosition.y -= chestContentsIconBackground.outputSize.y * 2 / 3; // For some spacing
+
+			draw_spritesheet(&chestContentsIconBackground, iconPosition);
+			
+			#partial switch chest.contents.type {
+				case .Pistol:
+					draw_spritesheet(&game.pistolIcon, iconPosition);
+				}
 		} else {
 			spritesheet_set_frame(&chestSpritesheet, 0);
 		}
