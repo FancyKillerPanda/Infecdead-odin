@@ -1,5 +1,7 @@
 package main;
 
+import "core:strings"
+
 import sdl "vendor:sdl2"
 import img "vendor:sdl2/image"
 import ttf "vendor:sdl2/ttf"
@@ -21,7 +23,8 @@ create_text :: proc(renderer: ^sdl.Renderer, font: ^ttf.Font, message: cstring, 
 	text.message = message;
 	
 	change_text_colour(&text, colour);
-	ttf.SizeUTF8(font, message, &text.rect.w, &text.rect.h);
+	SizeUTF8_Wrapped(font, message, &text.rect.w, &text.rect.h);
+	printf("%s: 			{}, {}\n", message, text.rect.w, text.rect.h);
 
 	return;
 }
@@ -44,4 +47,32 @@ change_text_colour :: proc(using text: ^Text, colour_: sdl.Colour) {
 	surface := ttf.RenderUTF8_Solid_Wrapped(font, message, colour, 0);
 	texture = sdl.CreateTextureFromSurface(renderer, surface);
 	sdl.FreeSurface(surface);
+}
+
+SizeUTF8_Wrapped :: proc(font: ^ttf.Font, messageCString: cstring, width: ^i32, height: ^i32) {
+	message := string(messageCString);
+	
+	lineStart: i32;
+	lineCurrent: i32;
+	longestLineWidth: i32;
+	numberOfLines: i32 = 1;
+
+	for char in message {
+		lineCurrent += 1;
+		if char == '\n' {
+			line := message[lineStart : lineCurrent];
+			numberOfLines += 1;
+			lineStart = lineCurrent;
+			
+			ttf.SizeUTF8(font, strings.clone_to_cstring(line, context.temp_allocator), width, height);
+			if width^ > longestLineWidth do longestLineWidth = width^;
+		}
+	}
+
+	if numberOfLines == 1 {
+		ttf.SizeUTF8(font, messageCString, &longestLineWidth, height);
+	}
+	
+	width^ = longestLineWidth;
+	height^ = numberOfLines * ttf.FontLineSkip(font);
 }
