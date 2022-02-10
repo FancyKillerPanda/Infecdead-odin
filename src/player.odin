@@ -157,7 +157,7 @@ update_player :: proc(using player: ^Player, deltaTime: f64) {
 	worldPosition.x += velocity.x * deltaTime;
 	worldPositionRect: sdl.Rect = {
 		i32(worldPosition.x - (dimensions.x / 2.0)),
-		i32(worldPosition.y - (dimensions.y / 4.0)),
+		i32(worldPosition.y + (dimensions.y / 4.0)),
 		i32(dimensions.x),
 		i32(dimensions.y / 2.0),
 	};
@@ -172,7 +172,7 @@ update_player :: proc(using player: ^Player, deltaTime: f64) {
 
 	worldPosition.y += velocity.y * deltaTime;
 	worldPositionRect.x = i32(worldPosition.x - (dimensions.x / 2.0));
-	worldPositionRect.y = i32(worldPosition.y - (dimensions.y / 4.0));
+	worldPositionRect.y = i32(worldPosition.y + (dimensions.y / 4.0));
 
 	for object in &game.tilemap.objects {
 		if sdl.HasIntersection(&worldPositionRect, &object) {

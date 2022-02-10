@@ -175,6 +175,7 @@ draw_game :: proc(using game: ^Game) {
 
 draw_gameplay :: proc(using game: ^Game) {
 	draw_tilemap_first_pass(&tilemap, viewOffset);
+	draw_chests(game, viewOffset);
 	draw_player(&player, viewOffset);
 	
 	for zombie in &zombies {
@@ -183,7 +184,6 @@ draw_gameplay :: proc(using game: ^Game) {
 	
 	draw_tilemap_second_pass(&tilemap, viewOffset);
 
-	draw_chests(game, viewOffset);
 	draw_minimap(&tilemap);
 	draw_inventory_slots(game);
 	draw_player_health_bar(&player);
