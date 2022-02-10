@@ -14,6 +14,8 @@ PLAYER_ROTATION_SPEED :: 7;
 PLAYER_HEALTH_BAR_WIDTH :: 400;
 PLAYER_HEALTH_BAR_HEIGHT :: 40;
 
+MED_KIT_HEALTH_BOOST :: 0.3;
+
 PISTOL_SHOT_COOLDOWN :: 0.4;
 PISTOL_SHOT_VELOCITY :: 800;
 PISTOL_SHOT_LIFETIME :: 1.0;
@@ -104,7 +106,7 @@ handle_player_events :: proc(using player: ^Player, event: ^sdl.Event) {
 					swap_current_slot_with_chest(player);
 
 				case .E:
-					swap_current_slot_with_chest(player);
+					use_item(player);
 			}
 
 		case .MOUSEWHEEL:
@@ -275,7 +277,21 @@ draw_player_on_minimap :: proc(using player: ^Player, minimapPosition: Vector2) 
 	sdl.RenderFillRect(game.renderer, &minimapPlayerRect);
 }
 
+healthBarFrame: f64;
+
 draw_player_health_bar :: proc(using player: ^Player) {
+	get_health_colour :: proc(health: f64) -> sdl.Colour {
+		if health > 0.75 {
+			return { 0, 192, 0, 255 };
+		} else if health > 0.5 {
+			return { 0, 255, 0, 255 };
+		} else if health > 0.25 {
+			return { 255, 255, 0, 255 };
+		} else {
+			return { 255, 0, 0, 255 };
+		}
+	}
+	
 	fullHealthBarRect: sdl.Rect = {
 		i32(game.screenDimensions.x * 2 / 100),
 		i32(game.screenDimensions.y * 2 / 100),
@@ -290,18 +306,33 @@ draw_player_health_bar :: proc(using player: ^Player) {
 		fullHealthBarRect.h,
 	};
 	
-	if health > 0.75 {
-		sdl.SetRenderDrawColor(game.renderer, 0, 192, 0, 255);
-	} else if health > 0.5 {
-		sdl.SetRenderDrawColor(game.renderer, 0, 255, 0, 255);
-	} else if health > 0.25 {
-		sdl.SetRenderDrawColor(game.renderer, 255, 255, 0, 255);
-	} else {
-		sdl.SetRenderDrawColor(game.renderer, 255, 0, 0, 255);
-	}
-
+	colour := get_health_colour(health);
+	sdl.SetRenderDrawColor(game.renderer, colour.r, colour.g, colour.b, colour.a);
 	sdl.RenderFillRect(game.renderer, &healthBarRect);
+
+	if inventorySlots[currentlySelectedInventorySlot].type == .MedKit {
+		healthBarRect.x += healthBarRect.w;
+		healthBarRect.w = i32(f64(fullHealthBarRect.w) * MED_KIT_HEALTH_BOOST);
+
+		if healthBarRect.x + healthBarRect.w > fullHealthBarRect.x + fullHealthBarRect.w {
+			healthBarRect.w = (fullHealthBarRect.x + fullHealthBarRect.w) - healthBarRect.x;
+		}
+
+		colour = get_health_colour(health + MED_KIT_HEALTH_BOOST);
+		sdl.SetRenderDrawColor(game.renderer, colour.r, colour.g, colour.b, u8(((math.sin(healthBarFrame) + 1) / 2) * 127));
+		sdl.RenderFillRect(game.renderer, &healthBarRect);
+
+		healthBarFrame += 0.1;
+	}
+	
 	sdl.SetRenderDrawColor(game.renderer, 0, 0, 0, 255);
+	sdl.RenderDrawRect(game.renderer, &fullHealthBarRect);
+	
+	// Draws a second pixel of outline
+	fullHealthBarRect.x += 1;
+	fullHealthBarRect.y += 1;
+	fullHealthBarRect.w -= 2;
+	fullHealthBarRect.h -= 2;
 	sdl.RenderDrawRect(game.renderer, &fullHealthBarRect);
 }
 
@@ -332,6 +363,27 @@ take_damage :: proc(using player: ^Player, damage: f64) {
 		printf("You died.\n");
 		health = 0;
 		return;
+	}
+}
+
+use_item :: proc(using player: ^Player) {
+	for chest in game.chests {
+		if chest.isOpen {
+			swap_current_slot_with_chest(player);
+			return; // You can't use an item while looking at a chest
+		}
+	}
+	
+	switch inventorySlots[currentlySelectedInventorySlot].type {
+		case .Empty:
+		case .Pistol:
+			// Do nothing
+
+		case .MedKit:
+			health += MED_KIT_HEALTH_BOOST;
+			if health > 1.0 do health = 1.0;
+
+			inventorySlots[currentlySelectedInventorySlot] = InventoryItem { type = .Empty };
 	}
 }
 
