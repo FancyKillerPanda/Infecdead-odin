@@ -20,12 +20,14 @@ you are in brings you crashing down. So what will it be? Weapons? Defence? Med-k
 ABOUT_TEXT :: \
 `Infecdead v0.0.1
 
-By FancyKillerPanda
+Created by FancyKillerPanda
 https://github.com/FancyKillerPanda/
 https://fancykillerpanda.itch.io/
 
+
 More from me:
 https://fancykillerpanda.itch.io/jumper/
+
 
 Texture assets were inspired by a variety of sources in the public
 domain, notably Kenney's work on https://opengameart.org/`;
@@ -34,12 +36,15 @@ Menu :: struct {
 	game: ^Game,
 	state: MenuState,
 
+	titleFont: ^ttf.Font,
 	textFont: ^ttf.Font,
 
 	currentButtonGroup: ^ButtonGroup,
 	homeButtons: ^ButtonGroup,
 	profileSelectionButtons: ^ButtonGroup,
+	backButton: ButtonGroup,
 
+	titleText: Text,
 	helpText: Text,
 	aboutText: Text,
 }
@@ -56,8 +61,9 @@ create_menu :: proc(game: ^Game) -> (menu: Menu) {
 	menu.game = game;
 	menu.state = .Home;
 
+	menu.titleFont = ttf.OpenFont("res/fonts/Pixeltype.ttf", 128);
 	menu.textFont = ttf.OpenFont("res/fonts/Pixeltype.ttf", 42);
-	if menu.textFont == nil {
+	if menu.titleFont == nil || menu.textFont == nil {
 		printf("Error: Failed to load menu font. Reason: {}\n", sdl.GetError());
 		return;
 	}
@@ -71,7 +77,10 @@ create_menu :: proc(game: ^Game) -> (menu: Menu) {
 	set_button_group_colours(menu.profileSelectionButtons, MENU_BASE_COLOUR, MENU_HOVER_COLOUR, MENU_PRESSED_COLOUR);
 	
 	menu.currentButtonGroup = menu.homeButtons;
+	menu.backButton = create_button_group(game.renderer, menu.textFont, { "Back" });
+	set_button_group_colours(&menu.backButton, MENU_BASE_COLOUR, MENU_HOVER_COLOUR, MENU_PRESSED_COLOUR);
 
+	menu.titleText = create_text(game.renderer, menu.titleFont, "INFECDEAD");
 	menu.helpText = create_text(game.renderer, menu.textFont, HELP_TEXT);
 	menu.aboutText = create_text(game.renderer, menu.textFont, ABOUT_TEXT);
 
@@ -85,9 +94,17 @@ handle_menu_events :: proc(using menu: ^Menu, event: ^sdl.Event) {
 				button_group_handle_mouse_motion(currentButtonGroup, event);
 			}
 		
+			if state != .Home {
+				button_group_handle_mouse_motion(&backButton, event);
+			}
+
 		case .MOUSEBUTTONDOWN:
 			if currentButtonGroup != nil {
 				button_group_handle_mouse_down(currentButtonGroup, event);
+			}
+
+			if state != .Home {
+				button_group_handle_mouse_down(&backButton, event);
 			}
 
 		case .MOUSEBUTTONUP:
@@ -122,6 +139,14 @@ handle_menu_events :: proc(using menu: ^Menu, event: ^sdl.Event) {
 						reset_game(game);
 				}
 			}
+			
+			if state != .Home {
+				result = button_group_handle_mouse_up(&backButton, event);
+				if result != -1 {
+					state = .Home;
+					currentButtonGroup = homeButtons;
+				}
+			}
 	}
 }
 
@@ -133,20 +158,30 @@ draw_menu :: proc(using menu: ^Menu) {
 
 	draw_dark_overlay(game);
 
+	screenWidth := game.screenDimensions.x;
+	screenHeight := game.screenDimensions.y;
+	
 	switch state {
 		case .Home:
-			draw_button_group(homeButtons, game.screenDimensions / 2, { 0, game.screenDimensions.y * 1 / 10 })
+			draw_text(&titleText, { screenWidth / 2, screenHeight / 4 });
+			draw_button_group(homeButtons, { screenWidth / 2, screenHeight * 55 / 100 }, { 0, screenHeight * 1 / 10 })
 		
 		case .ProfileSelection:
-			draw_button_group(profileSelectionButtons, game.screenDimensions / 2, { game.screenDimensions.x * 2 / 10, 0 });
+			draw_button_group(profileSelectionButtons, game.screenDimensions / 2, { screenWidth * 2 / 10, 0 });
+			draw_button_group(&backButton, { screenWidth / 2, screenHeight * 4 / 5 }, 0);
 
 		case .Help:
+			draw_text(&titleText, { screenWidth / 2, screenHeight / 4 });
 			draw_text(&helpText, game.screenDimensions / 2);
+			draw_button_group(&backButton, { screenWidth / 2, screenHeight * 4 / 5 }, 0);
 			
 		case .Options:
 			// TODO(fkp): Options
+			draw_button_group(&backButton, { screenWidth / 2, screenHeight * 4 / 5 }, 0);
 			
 		case .About:
+			draw_text(&titleText, { screenWidth / 2, screenHeight / 4 });
 			draw_text(&aboutText, game.screenDimensions / 2);
+			draw_button_group(&backButton, { screenWidth / 2, screenHeight * 4 / 5 }, 0);
 	}
 }
