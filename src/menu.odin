@@ -18,14 +18,14 @@ But beware, you can only carry four items before the weight of the situation
 you are in brings you crashing down. So what will it be? Weapons? Defence? Med-kits?`;
 
 ABOUT_TEXT :: \
-`Infecdead v0.0.1\n
+`Infecdead v0.0.1
 
 By FancyKillerPanda
 https://github.com/FancyKillerPanda/
 https://fancykillerpanda.itch.io/
 
 More from me:
-https://fancykillerpanda.itch.io/jumper
+https://fancykillerpanda.itch.io/jumper/
 
 Texture assets were inspired by a variety of sources in the public
 domain, notably Kenney's work on https://opengameart.org/`;
@@ -56,7 +56,7 @@ create_menu :: proc(game: ^Game) -> (menu: Menu) {
 	menu.game = game;
 	menu.state = .Home;
 
-	menu.textFont = ttf.OpenFont("res/fonts/Pixellari.ttf", 36);
+	menu.textFont = ttf.OpenFont("res/fonts/Pixeltype.ttf", 42);
 	if menu.textFont == nil {
 		printf("Error: Failed to load menu font. Reason: {}\n", sdl.GetError());
 		return;

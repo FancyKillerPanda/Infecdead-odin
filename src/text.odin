@@ -72,7 +72,7 @@ SizeUTF8_Wrapped :: proc(font: ^ttf.Font, messageCString: cstring, width: ^i32, 
 	if numberOfLines == 1 {
 		ttf.SizeUTF8(font, messageCString, &longestLineWidth, height);
 	}
-	
+
 	width^ = longestLineWidth;
 	height^ = numberOfLines * ttf.FontLineSkip(font);
 }
