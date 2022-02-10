@@ -11,8 +11,8 @@ PLAYER_WALK_ACC :: 1000;
 PLAYER_FRICTION :: 0.90;
 PLAYER_ROTATION_SPEED :: 7;
 
-PLAYER_HEALTH_BAR_WIDTH :: 200;
-PLAYER_HEALTH_BAR_HEIGHT :: 20;
+PLAYER_HEALTH_BAR_WIDTH :: 400;
+PLAYER_HEALTH_BAR_HEIGHT :: 40;
 
 PISTOL_SHOT_COOLDOWN :: 0.4;
 PISTOL_SHOT_VELOCITY :: 800;
@@ -274,35 +274,10 @@ draw_player_on_minimap :: proc(using player: ^Player, minimapPosition: Vector2) 
 	sdl.RenderFillRect(game.renderer, &minimapPlayerRect);
 }
 
-shoot :: proc(using player: ^Player) {
-	if inventorySlots[currentlySelectedInventorySlot].type == .Pistol {
-		if inventorySlots[currentlySelectedInventorySlot].data.(PistolData).bulletsLeft > 0 {
-			if timeSinceLastShot >= PISTOL_SHOT_COOLDOWN {
-				timeSinceLastShot = 0;
-				(&inventorySlots[currentlySelectedInventorySlot].data.(PistolData)).bulletsLeft -= 1;
-
-				append(&activeBullets, create_pistol_bullet(player));
-			}
-		} else {
-			printf("Magazine is empty!\n");
-		}
-	}
-}
-
-take_damage :: proc(using player: ^Player, damage: f64) {
-	health -= damage;
-
-	if health <= 0 {
-		printf("You died.\n");
-		health = 0;
-		return;
-	}
-}
-
 draw_player_health_bar :: proc(using player: ^Player) {
 	fullHealthBarRect: sdl.Rect = {
-		i32(game.screenDimensions.x * 1 / 100),
-		i32((game.screenDimensions.y * 99 / 100) - PLAYER_HEALTH_BAR_HEIGHT),
+		i32(game.screenDimensions.x * 2 / 100),
+		i32((game.screenDimensions.y * 98 / 100) - PLAYER_HEALTH_BAR_HEIGHT),
 		i32(PLAYER_HEALTH_BAR_WIDTH),
 		i32(PLAYER_HEALTH_BAR_HEIGHT),
 	}
@@ -327,6 +302,31 @@ draw_player_health_bar :: proc(using player: ^Player) {
 	sdl.RenderFillRect(game.renderer, &healthBarRect);
 	sdl.SetRenderDrawColor(game.renderer, 0, 0, 0, 255);
 	sdl.RenderDrawRect(game.renderer, &fullHealthBarRect);
+}
+
+shoot :: proc(using player: ^Player) {
+	if inventorySlots[currentlySelectedInventorySlot].type == .Pistol {
+		if inventorySlots[currentlySelectedInventorySlot].data.(PistolData).bulletsLeft > 0 {
+			if timeSinceLastShot >= PISTOL_SHOT_COOLDOWN {
+				timeSinceLastShot = 0;
+				(&inventorySlots[currentlySelectedInventorySlot].data.(PistolData)).bulletsLeft -= 1;
+
+				append(&activeBullets, create_pistol_bullet(player));
+			}
+		} else {
+			printf("Magazine is empty!\n");
+		}
+	}
+}
+
+take_damage :: proc(using player: ^Player, damage: f64) {
+	health -= damage;
+
+	if health <= 0 {
+		printf("You died.\n");
+		health = 0;
+		return;
+	}
 }
 
 get_player_world_rect :: proc(using player: ^Player) -> (rect: sdl.Rect) {
