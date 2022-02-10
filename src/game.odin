@@ -142,7 +142,19 @@ update_game :: proc(using game: ^Game, deltaTime: f64) {
 draw_game :: proc(using game: ^Game) {
 	sdl.SetRenderDrawColor(renderer, 192, 192, 192, 255);
 	sdl.RenderClear(renderer);
+	
+	switch state {
+		case .Playing:
+			draw_gameplay(game);
 
+		case .Paused:
+			draw_paused(game);
+	}
+	
+	sdl.RenderPresent(renderer);
+}
+
+draw_gameplay :: proc(using game: ^Game) {
 	draw_tilemap_first_pass(&tilemap, viewOffset);
 	draw_player(&player, viewOffset);
 	
@@ -151,19 +163,22 @@ draw_game :: proc(using game: ^Game) {
 	}
 	
 	draw_tilemap_second_pass(&tilemap, viewOffset);
+
 	draw_minimap(&tilemap);
 	draw_inventory_slots(game);
 	draw_player_health_bar(&player);
-	
-	// Draws a dark overlay
-	if state == .Paused {
-		fillRect := create_sdl_rect(Vector2 { 0, 0 }, screenDimensions);
+}
+
+draw_paused :: proc(using game: ^Game) {
+	draw_gameplay(game);
+	draw_dark_overlay(game);
+}
+
+draw_dark_overlay :: proc(using game: ^Game) {
+	fillRect := create_sdl_rect(Vector2 { 0, 0 }, screenDimensions);
 		
-		sdl.SetRenderDrawColor(renderer, 50, 50, 50, 200);
-		sdl.RenderFillRect(renderer, &fillRect);
-	}
-	
-	sdl.RenderPresent(renderer);
+	sdl.SetRenderDrawColor(renderer, 50, 50, 50, 200);
+	sdl.RenderFillRect(renderer, &fillRect);
 }
 
 draw_inventory_slots :: proc(using game: ^Game) {
