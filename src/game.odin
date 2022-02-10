@@ -18,6 +18,8 @@ Game :: struct {
 	renderer: ^sdl.Renderer,
 	keysPressed: [sdl.Scancode.NUM_SCANCODES] bool,
 
+	menu: Menu,
+	
 	player: Player,
 	zombies: [dynamic] Zombie,
 	tilemap: Tilemap,
@@ -30,6 +32,7 @@ Game :: struct {
 }
 
 GameState :: enum {
+	Menu,
 	Playing,
 	Paused,
 }
@@ -45,10 +48,11 @@ init_game :: proc(using game: ^Game) -> bool {
 	init_spritesheet(&inventorySlotBackgroundSelected, renderer, "res/ui/inventory_slot_background_selected.png", { 0, 0 }, { 0, 0 }, 1, 1, nil, 0);
 	init_spritesheet(&pistolIcon, renderer, "res/ui/pistol_icon.png", { 0, 0 }, { 0, 0 }, 1, 1, nil, 0);
 	
-	spawn_entities(&tilemap);
+	menu = create_menu(game);
+	// spawn_entities(&tilemap);
 	
 	running = true;
-	state = .Playing;
+	state = .Menu;
 	
 	return true;
 }
@@ -94,16 +98,16 @@ handle_events :: proc(using game: ^Game) {
 				keysPressed[event.key.keysym.scancode] = true;
 
 				#partial switch event.key.keysym.scancode {
-					case .P:
-						if state == .Playing {
-							state = .Paused;
-						} else if state == .Paused {
-							state = .Playing;
-						}
-
 					case .ESCAPE:
-						if state == .Paused {
-							state = .Playing;
+						switch state {
+							case .Menu:
+								running = false;
+
+							case .Playing:
+								state = .Paused;
+
+							case .Paused:
+								state = .Playing;
 						}
 				}
 
@@ -111,7 +115,13 @@ handle_events :: proc(using game: ^Game) {
 				keysPressed[event.key.keysym.scancode] = false;
 		}
 
-		handle_player_events(&player, &event);
+		#partial switch state {
+			case .Menu:
+				handle_menu_events(&menu, &event);
+
+			case .Playing:
+				handle_player_events(&player, &event);
+		}
 	}
 }
 
@@ -144,6 +154,9 @@ draw_game :: proc(using game: ^Game) {
 	sdl.RenderClear(renderer);
 	
 	switch state {
+		case .Menu:
+			draw_menu(&menu);
+
 		case .Playing:
 			draw_gameplay(game);
 
