@@ -1,6 +1,7 @@
 package main;
 
 import "core:encoding/json"
+import "core:fmt"
 import "core:os"
 import core_filepath "core:path/filepath"
 import "core:strings"
@@ -354,7 +355,10 @@ spawn_chests :: proc(using tilemap: ^Tilemap) {
 					switch spawnPoint.properties["value"] {
 						case "pistol":
 							contents.type = .Pistol;
-							contents.data = PistolData { bulletsLeft = 16, };
+							contents.data = PistolData { bulletsLeft = 16, maxBullets = 16, };
+
+							text := fmt.tprintf("{}/{}", contents.data.(PistolData).bulletsLeft, contents.data.(PistolData).maxBullets);
+							contents.currentText = create_text(game.renderer, game.menu.textFont, strings.clone_to_cstring(text));
 						
 						case "med_kit":
 							contents.type = .MedKit;

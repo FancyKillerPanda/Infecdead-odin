@@ -258,6 +258,17 @@
                  "width":16,
                  "x":864,
                  "y":688
+                }, 
+                {
+                 "height":16,
+                 "id":32,
+                 "name":"Chest",
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":16,
+                 "x":880,
+                 "y":784
                 }],
          "opacity":1,
          "type":"objectgroup",
@@ -329,6 +340,24 @@
                  "width":0,
                  "x":864,
                  "y":688
+                }, 
+                {
+                 "height":0,
+                 "id":31,
+                 "name":"Chest",
+                 "point":true,
+                 "properties":[
+                        {
+                         "name":"contents",
+                         "type":"string",
+                         "value":"pistol"
+                        }],
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":0,
+                 "x":880,
+                 "y":784
                 }],
          "opacity":1,
          "type":"objectgroup",
@@ -337,7 +366,7 @@
          "y":0
         }],
  "nextlayerid":11,
- "nextobjectid":31,
+ "nextobjectid":33,
  "orientation":"orthogonal",
  "renderorder":"right-down",
  "tiledversion":"1.7.2",

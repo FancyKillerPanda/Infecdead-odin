@@ -39,7 +39,7 @@ update_chests :: proc(using game: ^Game) {
 }
 
 draw_chests :: proc(game: ^Game, viewOffset: Vector2) {
-	for chest in game.chests {
+	for chest in &game.chests {
 		if chest.isOpen {
 			spritesheet_set_frame(&chestSpritesheet, 1);
 
@@ -57,7 +57,11 @@ draw_chests :: proc(game: ^Game, viewOffset: Vector2) {
 				
 				case .MedKit:
 					draw_spritesheet(&game.medKitIcon, iconPosition);
-				}
+			}
+
+			if chest.contents.currentText.message != "" {
+				draw_text(&chest.contents.currentText, { iconPosition.x, iconPosition.y + f64(chest.contents.currentText.rect.h)});
+			}
 		} else {
 			spritesheet_set_frame(&chestSpritesheet, 0);
 		}

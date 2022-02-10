@@ -57,10 +57,13 @@ InventoryItem :: struct {
 	data: union {
 		PistolData,
 	},
+
+	currentText: Text,
 }
 
 PistolData :: struct {
 	bulletsLeft: u32,
+	maxBullets: u32,
 }
 
 Bullet :: struct {
@@ -75,7 +78,6 @@ Bullet :: struct {
 create_player :: proc(game: ^Game) -> (player: Player) {
 	player.game = game;
 	
-	// player.dimensions = { 96, 96 };
 	player.dimensions = { 64, 64 };
 
 	player.walkSpritesheet = new(Spritesheet);
@@ -84,11 +86,6 @@ create_player :: proc(game: ^Game) -> (player: Player) {
 	init_spritesheet(player.walkWithPistolSpritesheet, game.renderer, "res/player/player_with_pistol.png", player.dimensions, { 16, 16 }, 32, 4, nil, 0);
 
 	player.currentSpritesheet = player.walkWithPistolSpritesheet;
-
-	// TODO(fkp): Make the player pick this up somewhere
-	player.inventorySlots[1].type = .Pistol;
-	player.inventorySlots[1].data = PistolData { bulletsLeft = 5 };
-	player.currentlySelectedInventorySlot = 1;
 
 	player.health = 1.0;
 
@@ -281,7 +278,7 @@ draw_player_on_minimap :: proc(using player: ^Player, minimapPosition: Vector2) 
 draw_player_health_bar :: proc(using player: ^Player) {
 	fullHealthBarRect: sdl.Rect = {
 		i32(game.screenDimensions.x * 2 / 100),
-		i32((game.screenDimensions.y * 98 / 100) - PLAYER_HEALTH_BAR_HEIGHT),
+		i32(game.screenDimensions.y * 2 / 100),
 		i32(PLAYER_HEALTH_BAR_WIDTH),
 		i32(PLAYER_HEALTH_BAR_HEIGHT),
 	}
@@ -314,6 +311,11 @@ shoot :: proc(using player: ^Player) {
 			if timeSinceLastShot >= PISTOL_SHOT_COOLDOWN {
 				timeSinceLastShot = 0;
 				(&inventorySlots[currentlySelectedInventorySlot].data.(PistolData)).bulletsLeft -= 1;
+
+				newText := fmt.tprintf("{}/{}", inventorySlots[currentlySelectedInventorySlot].data.(PistolData).bulletsLeft,
+												inventorySlots[currentlySelectedInventorySlot].data.(PistolData).maxBullets);
+				free_text(&inventorySlots[currentlySelectedInventorySlot].currentText);
+				inventorySlots[currentlySelectedInventorySlot].currentText = create_text(game.renderer, game.menu.textFont, strings.clone_to_cstring(newText));
 
 				append(&activeBullets, create_pistol_bullet(player));
 			}

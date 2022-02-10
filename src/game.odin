@@ -44,6 +44,7 @@ init_game :: proc(using game: ^Game) -> bool {
 	
 	tilemap = parse_tilemap(game, "res/map/outside.json", OUTPUT_TILE_SIZE) or_return;
 	game.currentWorldDimensions = tilemap.dimensions * OUTPUT_TILE_SIZE;
+	menu = create_menu(game);
 	player = create_player(game);
 	init_chests(game);
 	
@@ -51,8 +52,6 @@ init_game :: proc(using game: ^Game) -> bool {
 	init_spritesheet(&inventorySlotBackgroundSelected, renderer, "res/ui/inventory_slot_background_selected.png", { 0, 0 }, { 0, 0 }, 1, 1, nil, 0);
 	init_spritesheet(&pistolIcon, renderer, "res/ui/pistol_icon.png", { 0, 0 }, { 0, 0 }, 1, 1, nil, 0);
 	init_spritesheet(&medKitIcon, renderer, "res/ui/med_kit_icon.png", { 0, 0 }, { 0, 0 }, 1, 1, nil, 0);
-	
-	menu = create_menu(game);
 	
 	running = true;
 	state = .Menu;
@@ -225,6 +224,10 @@ draw_inventory_slots :: proc(using game: ^Game) {
 				
 			case .MedKit:
 				draw_spritesheet(&medKitIcon, { x, y });
+		}
+
+		if player.inventorySlots[i].currentText.message != "" {
+			draw_text(&player.inventorySlots[i].currentText, { x, y + f64(player.inventorySlots[i].currentText.rect.h) });
 		}
 
 		x += inventorySlotBackground.outputSize.x;
