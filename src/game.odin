@@ -72,7 +72,7 @@ run_game :: proc(using game: ^Game) {
 		draw_game(game);
 		
 		frameTimeAverageCount += 1;
-		if frameTimeAverageCount == 30 {
+		if frameTimeAverageCount == 60 {
 			frameTimeAverage := (f64(time.diff(frameTimeAverageStart, time.now())) / f64(time.Millisecond)) / f64(frameTimeAverageCount);
 			printf("Frame: %d ms (%d FPS)\n", i64(frameTimeAverage), i64(1000.0 / frameTimeAverage));
 
@@ -143,32 +143,17 @@ draw_game :: proc(using game: ^Game) {
 	sdl.SetRenderDrawColor(renderer, 192, 192, 192, 255);
 	sdl.RenderClear(renderer);
 
-	draw_tilemap_first_pass(&tilemap, OUTPUT_TILE_SIZE, viewOffset);
+	draw_tilemap_first_pass(&tilemap, viewOffset);
 	draw_player(&player, viewOffset);
-
+	
 	for zombie in &zombies {
 		draw_zombie(&zombie, viewOffset);
 	}
 	
-	draw_tilemap_second_pass(&tilemap, OUTPUT_TILE_SIZE, viewOffset);
+	draw_tilemap_second_pass(&tilemap, viewOffset);
+	draw_minimap(&tilemap);
 	draw_inventory_slots(game);
-
-	// Draws the minimap
-	minimapPosition: Vector2 = { screenDimensions.x * 89 / 100, screenDimensions.y * 1 / 100 };
-	minimapRect: sdl.Rect = {
-		i32(minimapPosition.x),
-		i32(minimapPosition.y),
-		i32(MINIMAP_TILE_SIZE.x * tilemap.dimensions.x),
-		i32(MINIMAP_TILE_SIZE.y * tilemap.dimensions.y),
-	};
-
-	draw_tilemap_first_pass(&tilemap, MINIMAP_TILE_SIZE, -minimapPosition);
-	draw_tilemap_second_pass(&tilemap, MINIMAP_TILE_SIZE, -minimapPosition);
-	draw_player_on_minimap(&player, minimapPosition);
-
-	sdl.SetRenderDrawColor(renderer, 0, 0, 0, 255);
-	sdl.RenderDrawRect(renderer, &minimapRect);
-
+	
 	// Draws a dark overlay
 	if state == .Paused {
 		fillRect: sdl.Rect = { 0, 0, i32(screenDimensions.x), i32(screenDimensions.y) }

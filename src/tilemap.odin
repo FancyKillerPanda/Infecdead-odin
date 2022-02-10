@@ -19,6 +19,11 @@ Tilemap :: struct {
 	
 	objects: [dynamic] sdl.Rect,
 	spawnPoints: [dynamic] SpawnPoint,
+
+	// Caches the rendered output
+	texturesAreDirty: bool,
+	textureFirstPass: ^sdl.Texture,
+	textureSecondPass: ^sdl.Texture,
 };
 
 Tileset :: struct {
@@ -88,6 +93,20 @@ parse_tilemap :: proc(game_: ^Game, filepath: string, outputTileSize: Vector2,) 
 				}
 		}
 	}
+
+	texturesAreDirty = true;
+	textureFirstPass = sdl.CreateTexture(game.renderer, u32(sdl.PixelFormatEnum.RGBA8888), sdl.TextureAccess.TARGET,
+										 i32(dimensions.x * OUTPUT_TILE_SIZE.x), i32(dimensions.y * OUTPUT_TILE_SIZE.y));
+	textureSecondPass = sdl.CreateTexture(game.renderer, u32(sdl.PixelFormatEnum.RGBA8888), sdl.TextureAccess.TARGET,
+										  i32(dimensions.x * OUTPUT_TILE_SIZE.x), i32(dimensions.y * OUTPUT_TILE_SIZE.y));
+
+	if textureFirstPass == nil || textureSecondPass == nil {
+		printf("Error: Failed to create tilemap cache textures. Reason: {}\n", sdl.GetError());
+		return;
+	}
+
+	sdl.SetTextureBlendMode(textureFirstPass, sdl.BlendMode.BLEND);
+	sdl.SetTextureBlendMode(textureSecondPass, sdl.BlendMode.BLEND);
 
 	success = true;
 	return;
@@ -211,43 +230,107 @@ parse_tileset :: proc(game_: ^Game, filepath: string) -> (tileset: Tileset, succ
 	return;
 }
 
-draw_tilemap_first_pass :: proc(using tilemap: ^Tilemap, outputTileDimensions: Vector2, offset: Vector2) {
-	draw_tilemap_internal(tilemap, renderDataFirstPass, outputTileDimensions, offset);
+draw_tilemap_first_pass :: proc(using tilemap: ^Tilemap, viewOffset: Vector2) {
+	draw_tilemap_internal(tilemap, 0, Vector2 { 0, 0 }, OUTPUT_TILE_SIZE, viewOffset, false);
 }
 
-draw_tilemap_second_pass :: proc(using tilemap: ^Tilemap, outputTileDimensions: Vector2, offset: Vector2) {
-	draw_tilemap_internal(tilemap, renderDataSecondPass, outputTileDimensions, offset);
+draw_tilemap_second_pass :: proc(using tilemap: ^Tilemap, viewOffset: Vector2) {
+	draw_tilemap_internal(tilemap, 1, Vector2 { 0, 0 }, OUTPUT_TILE_SIZE, viewOffset, false);
 }
 
-draw_tilemap_internal :: proc(using tilemap: ^Tilemap, pass: [dynamic] [dynamic] i16, outputTileDimensions: Vector2, offset: Vector2) {
-	rect: sdl.Rect = { 0, 0, i32(outputTileDimensions.x), i32(outputTileDimensions.y) };
+draw_minimap :: proc(using tilemap: ^Tilemap) {
+	minimapPosition: Vector2 = { game.screenDimensions.x * 89 / 100, game.screenDimensions.y * 1 / 100 };
+	minimapRect: sdl.Rect = {
+		i32(minimapPosition.x),
+		i32(minimapPosition.y),
+		i32(MINIMAP_TILE_SIZE.x * dimensions.x),
+		i32(MINIMAP_TILE_SIZE.y * dimensions.y),
+	};
+
+	draw_tilemap_internal(tilemap, 0, minimapPosition, MINIMAP_TILE_SIZE, Vector2 { 0, 0 }, true);
+	draw_tilemap_internal(tilemap, 1, minimapPosition, MINIMAP_TILE_SIZE, Vector2 { 0, 0 }, true);
+
+	draw_player_on_minimap(&game.player, minimapPosition);
+	
+	sdl.SetRenderDrawColor(game.renderer, 0, 0, 0, 255);
+	sdl.RenderDrawRect(game.renderer, &minimapRect);
+}
+
+draw_tilemap_internal :: proc(using tilemap: ^Tilemap, pass: u32, outputPosition: Vector2, outputTileDimensions: Vector2, viewOffset: Vector2, renderFullMap: bool) {
+	if texturesAreDirty {
+		draw_tilemap_to_textures(tilemap);
+	}
+	
+	textures: [2] ^sdl.Texture = { textureFirstPass, textureSecondPass };
+	textureRect: sdl.Rect;
+	outputRect: sdl.Rect;
+	
+	if renderFullMap {
+		textureRect = {
+			0,
+			0,
+			i32(dimensions.x * OUTPUT_TILE_SIZE.x),
+			i32(dimensions.y * OUTPUT_TILE_SIZE.y),
+		};
+		outputRect = {
+			i32(outputPosition.x),
+			i32(outputPosition.y),
+			i32(dimensions.x * outputTileDimensions.x),
+			i32(dimensions.y * outputTileDimensions.y),
+		};
+	} else {
+		textureRect = {
+			i32(viewOffset.x),
+			i32(viewOffset.y),
+			i32(game.screenDimensions.x),
+			i32(game.screenDimensions.y),
+		};
+		outputRect = {
+			i32(outputPosition.x),
+			i32(outputPosition.y),
+			i32(game.screenDimensions.x),
+			i32(game.screenDimensions.y),
+		};
+	}
+
+	sdl.RenderCopy(game.renderer, textures[pass], &textureRect, &outputRect);
+}
+
+draw_tilemap_to_textures :: proc(using tilemap: ^Tilemap) {
+	passes: [2] [dynamic] [dynamic] i16 = { renderDataFirstPass, renderDataSecondPass };
+	textures: [2] ^sdl.Texture = { textureFirstPass, textureSecondPass };
+
+	rect: sdl.Rect = { 0, 0, i32(OUTPUT_TILE_SIZE.x), i32(OUTPUT_TILE_SIZE.y) };
 	subrect: sdl.Rect = { 0, 0, i32(tileset.tileDimensions.x), i32(tileset.tileDimensions.y) };
 
-	for layer in pass {
-		currentRow: i32;
-		currentColumn: i32;
+	for pass, i in passes {
+		sdl.SetRenderTarget(game.renderer, textures[i]);
 		
-		for value in layer {
-			rect.x = (currentColumn * i32(outputTileDimensions.x)) - i32(offset.x);
-			rect.y = (currentRow * i32(outputTileDimensions.y)) - i32(offset.y);
+		for layer in pass {
+			currentRow: i32;
+			currentColumn: i32;
 			
-			if value < 0 {
-				advance_position(&currentRow, &currentColumn, tilemap, -value);
-				continue;
-			} else if rect.x + rect.w <= 0 || rect.x >= i32(game.screenDimensions.x) ||
-					  rect.y + rect.h <= 0 || rect.y >= i32(game.screenDimensions.y) {
+			for value in layer {
+				rect.x = currentColumn * i32(OUTPUT_TILE_SIZE.x);
+				rect.y = currentRow * i32(OUTPUT_TILE_SIZE.y);
+				
+				if value < 0 {
+					advance_position(&currentRow, &currentColumn, tilemap, -value);
+					continue;
+				}
+	
+				subrect.x = i32((value % i16(tileset.tilesPerRow)) * i16(tileset.tileDimensions.x));
+				subrect.y = i32((value / i16(tileset.tilesPerRow)) * i16(tileset.tileDimensions.y));
+				
+				sdl.RenderCopy(game.renderer, tileset.texture, &subrect, &rect);
 				advance_position(&currentRow, &currentColumn, tilemap);
-				continue;
 			}
-
-			subrect.x = i32((value % i16(tileset.tilesPerRow)) * i16(tileset.tileDimensions.x));
-			subrect.y = i32((value / i16(tileset.tilesPerRow)) * i16(tileset.tileDimensions.y));
-			
-			sdl.RenderCopy(game.renderer, tileset.texture, &subrect, &rect);
-			advance_position(&currentRow, &currentColumn, tilemap);
+	
 		}
-
 	}
+
+	texturesAreDirty = false;
+	sdl.SetRenderTarget(game.renderer, nil);
 }
 
 advance_position :: proc(currentRow: ^i32, currentColumn: ^i32, tilemap: ^Tilemap, amount: i16 = 1) {
