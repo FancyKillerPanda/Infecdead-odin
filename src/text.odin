@@ -24,7 +24,6 @@ create_text :: proc(renderer: ^sdl.Renderer, font: ^ttf.Font, message: cstring, 
 	
 	change_text_colour(&text, colour);
 	SizeUTF8_Wrapped(font, message, &text.rect.w, &text.rect.h);
-	printf("%s: 			{}, {}\n", message, text.rect.w, text.rect.h);
 
 	return;
 }

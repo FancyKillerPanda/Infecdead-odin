@@ -38,11 +38,13 @@ Tileset :: struct {
 SpawnPoint :: struct {
 	entityType: EntityType,
 	worldPosition: Vector2,
+	properties: [dynamic] json.Object,
 }
 
 EntityType :: enum {
 	Player,
 	Zombie,
+	Chest,
 }
 
 parse_tilemap :: proc(game_: ^Game, filepath: string, outputTileSize: Vector2,) -> (tilemap: Tilemap, success: bool) {
@@ -172,13 +174,21 @@ add_spawn_points :: proc(using tilemap: ^Tilemap, layer: json.Object) {
 		location: Vector2 = { f64(value.(json.Object)["x"].(json.Integer)), f64(value.(json.Object)["y"].(json.Integer)) };
 		worldPosition := (location * OUTPUT_TILE_SIZE) / tileset.tileDimensions;
 		entityType: EntityType;
+		properties: [dynamic] json.Object;
 		
 		switch value.(json.Object)["name"].(json.String) {
-			case "Player": entityType = .Player;
+			case "Player":entityType = .Player;
 			case "Zombie": entityType = .Zombie;
+			
+			case "Chest":
+				entityType = .Chest;
+				
+				for property in value.(json.Object)["properties"].(json.Array) {
+					append(&properties, property.(json.Object));
+				}
 		}
 		
-		append(&spawnPoints, SpawnPoint { entityType, worldPosition });
+		append(&spawnPoints, SpawnPoint { entityType, worldPosition, properties });
 	}
 }
 
@@ -321,12 +331,31 @@ advance_position :: proc(currentRow: ^i32, currentColumn: ^i32, tilemap: ^Tilema
 // of the player (it assumes the player has already been initialised).
 spawn_entities :: proc(using tilemap: ^Tilemap) {
 	for spawnPoint in spawnPoints {
-		switch spawnPoint.entityType {
+		#partial switch spawnPoint.entityType {
 			case .Player:
 				game.player.worldPosition = spawnPoint.worldPosition;
 
 			case .Zombie:
 				append(&game.zombies, create_zombie(game, spawnPoint.worldPosition));
+
+
+		}
+	}
+}
+
+spawn_chests :: proc(using tilemap: ^Tilemap) {
+	for spawnPoint in spawnPoints {
+		#partial switch spawnPoint.entityType {
+			case .Chest:
+				contents: InventoryItem;
+				for property in spawnPoint.properties {
+					if property["contents"] != nil && property["contents"].(json.String) == "pistol" {
+						contents.type = .Pistol;
+						contents.data = PistolData { bulletsLeft = 16, };
+					}
+				}
+				
+				append(&game.chests, Chest { open = false, contents = contents, worldPosition = spawnPoint.worldPosition });
 		}
 	}
 }

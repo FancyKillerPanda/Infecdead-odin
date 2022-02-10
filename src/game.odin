@@ -21,8 +21,9 @@ Game :: struct {
 	menu: Menu,
 	
 	player: Player,
-	zombies: [dynamic] Zombie,
 	tilemap: Tilemap,
+	zombies: [dynamic] Zombie,
+	chests: [dynamic] Chest,
 
 	viewOffset: Vector2,
 
@@ -43,6 +44,7 @@ init_game :: proc(using game: ^Game) -> bool {
 	tilemap = parse_tilemap(game, "res/map/outside.json", OUTPUT_TILE_SIZE) or_return;
 	game.currentWorldDimensions = tilemap.dimensions * OUTPUT_TILE_SIZE;
 	player = create_player(game);
+	init_chests(game);
 	
 	init_spritesheet(&inventorySlotBackground, renderer, "res/ui/inventory_slot_background.png", { 0, 0 }, { 0, 0 }, 1, 1, nil, 0);
 	init_spritesheet(&inventorySlotBackgroundSelected, renderer, "res/ui/inventory_slot_background_selected.png", { 0, 0 }, { 0, 0 }, 1, 1, nil, 0);
@@ -181,6 +183,7 @@ draw_gameplay :: proc(using game: ^Game) {
 	
 	draw_tilemap_second_pass(&tilemap, viewOffset);
 
+	draw_chests(game, viewOffset);
 	draw_minimap(&tilemap);
 	draw_inventory_slots(game);
 	draw_player_health_bar(&player);

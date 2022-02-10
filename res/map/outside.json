@@ -236,10 +236,21 @@
                  "width":64,
                  "x":1360,
                  "y":160
+                }, 
+                {
+                 "height":16,
+                 "id":27,
+                 "name":"Chest",
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":16,
+                 "x":768,
+                 "y":688
                 }],
          "opacity":1,
          "type":"objectgroup",
-         "visible":false,
+         "visible":true,
          "x":0,
          "y":0
         }, 
@@ -257,20 +268,8 @@
                  "type":"",
                  "visible":true,
                  "width":0,
-                 "x":784,
-                 "y":880
-                }, 
-                {
-                 "height":0,
-                 "id":24,
-                 "name":"Zombie",
-                 "point":true,
-                 "rotation":0,
-                 "type":"",
-                 "visible":true,
-                 "width":0,
-                 "x":896,
-                 "y":832
+                 "x":528,
+                 "y":992
                 }, 
                 {
                  "height":0,
@@ -283,6 +282,24 @@
                  "width":0,
                  "x":784,
                  "y":784
+                }, 
+                {
+                 "height":0,
+                 "id":26,
+                 "name":"Chest",
+                 "point":true,
+                 "properties":[
+                        {
+                         "name":"contents",
+                         "type":"string",
+                         "value":"pistol"
+                        }],
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":0,
+                 "x":768,
+                 "y":688
                 }],
          "opacity":1,
          "type":"objectgroup",
@@ -291,7 +308,7 @@
          "y":0
         }],
  "nextlayerid":11,
- "nextobjectid":26,
+ "nextobjectid":28,
  "orientation":"orthogonal",
  "renderorder":"right-down",
  "tiledversion":"1.7.2",
