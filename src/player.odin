@@ -155,12 +155,7 @@ update_player :: proc(using player: ^Player, deltaTime: f64) {
 	
 	// Updates position and does collision checking
 	worldPosition.x += velocity.x * deltaTime;
-	worldPositionRect: sdl.Rect = {
-		i32(worldPosition.x - (dimensions.x / 2.0)),
-		i32(worldPosition.y + (dimensions.y / 4.0)),
-		i32(dimensions.x),
-		i32(dimensions.y / 2.0),
-	};
+	worldPositionRect := get_player_world_rect(player);
 
 	for object in &game.tilemap.objects {
 		if sdl.HasIntersection(&worldPositionRect, &object) {
@@ -171,8 +166,7 @@ update_player :: proc(using player: ^Player, deltaTime: f64) {
 	}
 
 	worldPosition.y += velocity.y * deltaTime;
-	worldPositionRect.x = i32(worldPosition.x - (dimensions.x / 2.0));
-	worldPositionRect.y = i32(worldPosition.y + (dimensions.y / 4.0));
+	worldPositionRect = get_player_world_rect(player);
 
 	for object in &game.tilemap.objects {
 		if sdl.HasIntersection(&worldPositionRect, &object) {
@@ -332,6 +326,17 @@ draw_player_health_bar :: proc(using player: ^Player) {
 	sdl.RenderFillRect(game.renderer, &healthBarRect);
 	sdl.SetRenderDrawColor(game.renderer, 0, 0, 0, 255);
 	sdl.RenderDrawRect(game.renderer, &fullHealthBarRect);
+}
+
+get_player_world_rect :: proc(using player: ^Player) -> (rect: sdl.Rect) {
+	rect = sdl.Rect {
+		i32(worldPosition.x - (dimensions.x / 2.0)),
+		i32(worldPosition.y + (dimensions.y / 4.0)),
+		i32(dimensions.x),
+		i32(dimensions.y / 2.0),
+	};
+
+	return;
 }
 
 create_pistol_bullet :: proc(using player: ^Player) -> (bullet: Bullet) {

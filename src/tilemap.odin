@@ -254,7 +254,7 @@ draw_minimap :: proc(using tilemap: ^Tilemap) {
 
 	draw_tilemap_internal(tilemap, 0, minimapPosition, MINIMAP_TILE_SIZE, 0, true);
 	draw_tilemap_internal(tilemap, 1, minimapPosition, MINIMAP_TILE_SIZE, 0, true);
-
+	
 	draw_player_on_minimap(&game.player, minimapPosition);
 	
 	sdl.SetRenderDrawColor(game.renderer, 0, 0, 0, 255);

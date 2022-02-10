@@ -138,6 +138,8 @@ update_game :: proc(using game: ^Game, deltaTime: f64) {
 		for zombie in &zombies {
 			update_zombie(&zombie, deltaTime);
 		}
+
+		update_chests(game);
 		
 		// The view offset (basically a camera) tracks the player
 		viewOffset = player.worldPosition - (game.screenDimensions / 2.0);
