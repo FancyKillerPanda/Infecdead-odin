@@ -49,12 +49,16 @@ init_game :: proc(using game: ^Game) -> bool {
 	init_spritesheet(&pistolIcon, renderer, "res/ui/pistol_icon.png", { 0, 0 }, { 0, 0 }, 1, 1, nil, 0);
 	
 	menu = create_menu(game);
-	// spawn_entities(&tilemap);
 	
 	running = true;
 	state = .Menu;
 	
 	return true;
+}
+
+reset_game :: proc(using game: ^Game) {
+	clear(&zombies);
+	spawn_entities(&tilemap);
 }
 
 run_game :: proc(using game: ^Game) {

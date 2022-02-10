@@ -21,7 +21,7 @@ create_text :: proc(renderer: ^sdl.Renderer, font: ^ttf.Font, message: cstring, 
 	text.message = message;
 	
 	change_text_colour(&text, colour);
-	ttf.SizeText(font, message, &text.rect.w, &text.rect.h);
+	ttf.SizeUTF8(font, message, &text.rect.w, &text.rect.h);
 
 	return;
 }
@@ -41,7 +41,7 @@ draw_text :: proc(using text: ^Text, position: Vector2) {
 change_text_colour :: proc(using text: ^Text, colour_: sdl.Colour) {
 	colour = colour_;
 	
-	surface := ttf.RenderText_Solid(font, message, colour);
+	surface := ttf.RenderUTF8_Solid_Wrapped(font, message, colour, 0);
 	texture = sdl.CreateTextureFromSurface(renderer, surface);
 	sdl.FreeSurface(surface);
 }

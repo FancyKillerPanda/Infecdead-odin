@@ -30,7 +30,7 @@ create_button_group :: proc(renderer: ^sdl.Renderer, font: ^ttf.Font, texts: [] 
 }
 
 draw_button_group :: proc(using buttonGroup: ^ButtonGroup, position: Vector2, spacing: Vector2) {
-	currentPosition := position - ((f64(len(buttonTexts)) / 2.0) * spacing);
+	currentPosition := position - ((f64(len(buttonTexts) - 1) / 2.0) * spacing);
 	
 	for text in &buttonTexts {
 		draw_text(&text, currentPosition);
