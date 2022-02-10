@@ -11,6 +11,9 @@ PLAYER_WALK_ACC :: 1000;
 PLAYER_FRICTION :: 0.90;
 PLAYER_ROTATION_SPEED :: 7;
 
+PLAYER_HEALTH_BAR_WIDTH :: 200;
+PLAYER_HEALTH_BAR_HEIGHT :: 20;
+
 PISTOL_SHOT_COOLDOWN :: 0.4;
 PISTOL_SHOT_VELOCITY :: 800;
 PISTOL_SHOT_LIFETIME :: 1.0;
@@ -296,8 +299,39 @@ take_damage :: proc(using player: ^Player, damage: f64) {
 
 	if health <= 0 {
 		printf("You died.\n");
+		health = 0;
 		return;
 	}
+}
+
+draw_player_health_bar :: proc(using player: ^Player) {
+	fullHealthBarRect: sdl.Rect = {
+		i32(game.screenDimensions.x * 1 / 100),
+		i32((game.screenDimensions.y * 99 / 100) - PLAYER_HEALTH_BAR_HEIGHT),
+		i32(PLAYER_HEALTH_BAR_WIDTH),
+		i32(PLAYER_HEALTH_BAR_HEIGHT),
+	}
+
+	healthBarRect: sdl.Rect = {
+		fullHealthBarRect.x,
+		fullHealthBarRect.y,
+		i32(f64(fullHealthBarRect.w) * health),
+		fullHealthBarRect.h,
+	};
+	
+	if health > 0.75 {
+		sdl.SetRenderDrawColor(game.renderer, 0, 192, 0, 255);
+	} else if health > 0.5 {
+		sdl.SetRenderDrawColor(game.renderer, 0, 255, 0, 255);
+	} else if health > 0.25 {
+		sdl.SetRenderDrawColor(game.renderer, 255, 255, 0, 255);
+	} else {
+		sdl.SetRenderDrawColor(game.renderer, 255, 0, 0, 255);
+	}
+
+	sdl.RenderFillRect(game.renderer, &healthBarRect);
+	sdl.SetRenderDrawColor(game.renderer, 0, 0, 0, 255);
+	sdl.RenderDrawRect(game.renderer, &fullHealthBarRect);
 }
 
 create_pistol_bullet :: proc(using player: ^Player) -> (bullet: Bullet) {

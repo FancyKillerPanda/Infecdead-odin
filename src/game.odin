@@ -153,6 +153,7 @@ draw_game :: proc(using game: ^Game) {
 	draw_tilemap_second_pass(&tilemap, viewOffset);
 	draw_minimap(&tilemap);
 	draw_inventory_slots(game);
+	draw_player_health_bar(&player);
 	
 	// Draws a dark overlay
 	if state == .Paused {

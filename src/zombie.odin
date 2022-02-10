@@ -11,7 +11,7 @@ ZOMBIE_MIN_DAMAGE :: 0.1;
 ZOMBIE_MAX_DAMAGE :: 0.2;
 ZOMBIE_DAMAGE_COOLDOWN :: 0.5;
 
-HEALTH_BAR_HEIGHT :: 10;
+ZOMBIE_HEALTH_BAR_HEIGHT :: 10;
 
 Zombie :: struct {
 	game: ^Game,
@@ -137,9 +137,9 @@ draw_zombie :: proc(using zombie: ^Zombie, viewOffset: Vector2) {
 	if health < 1.0 {
 		fullHealthBarRect: sdl.Rect = {
 			i32(worldPosition.x - viewOffset.x - (dimensions.x / 2)),
-			i32((worldPosition.y - viewOffset.y - (dimensions.y / 2)) - (HEALTH_BAR_HEIGHT * 2)),
+			i32((worldPosition.y - viewOffset.y - (dimensions.y / 2)) - (ZOMBIE_HEALTH_BAR_HEIGHT * 2)),
 			i32(dimensions.x),
-			i32(HEALTH_BAR_HEIGHT),
+			i32(ZOMBIE_HEALTH_BAR_HEIGHT),
 		}
 
 		healthBarRect: sdl.Rect = {
