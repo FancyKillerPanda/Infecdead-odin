@@ -7,6 +7,8 @@ import sdl "vendor:sdl2"
 
 ZOMBIE_WALK_ACC :: 300;
 ZOMBIE_FRICTION :: 0.9;
+ZOMBIE_AGGRO_DISTANCE :: 500;
+
 ZOMBIE_MIN_DAMAGE :: 0.1;
 ZOMBIE_MAX_DAMAGE :: 0.2;
 ZOMBIE_DAMAGE_COOLDOWN :: 0.5;
@@ -42,7 +44,12 @@ update_zombie :: proc(using zombie: ^Zombie, deltaTime: f64) {
 	rotationVector: Vector2 = { math.cos_f64(rotationRadians), -math.sin_f64(rotationRadians) };
 	
 	// Movement
-	acceleration = rotationVector * ZOMBIE_WALK_ACC;
+	if vec2_length(deltaToPlayer) <= ZOMBIE_AGGRO_DISTANCE {
+		acceleration = rotationVector * ZOMBIE_WALK_ACC;
+	} else {
+		acceleration = 0;
+	}
+
 	velocity += acceleration * deltaTime;
 	velocity *= ZOMBIE_FRICTION;
 

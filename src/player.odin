@@ -186,6 +186,7 @@ update_player :: proc(using player: ^Player, deltaTime: f64) {
 
 		bulletRect := create_sdl_rect(bullet.worldPosition - bullet.spritesheet.outputSize, bullet.spritesheet.outputSize);
 
+		// TODO(fkp): Friendly fire
 		for zombie, zombieIndex in &game.zombies {
 			zombieRect := create_sdl_rect(zombie.worldPosition - (zombie.dimensions / 2), zombie.dimensions);
 			
