@@ -7,6 +7,8 @@ import sdl "vendor:sdl2"
 
 HOSTAGE_WALK_ACC :: 700;
 HOSTAGE_FRICTION :: 0.9;
+HOSTAGE_FOLLOW_DISTANCE :: 300;
+HOSTAGE_SCARE_DISTANCE :: 300;
 
 HOSTAGE_HEALTH_BAR_HEIGHT :: ZOMBIE_HEALTH_BAR_HEIGHT;
 
@@ -32,9 +34,31 @@ destory_hostage :: proc(using hostage: ^Hostage, hostageIndex: int) {
 }
 
 update_hostage :: proc(using hostage: ^Hostage, deltaTime: f64) {
-	// Rotation tracks the player
+	// Rotation tracks the player, but stays away from zombies
 	deltaToPlayer := game.player.worldPosition - worldPosition;
-	rotationRadians := math.atan2_f64(-deltaToPlayer.y, deltaToPlayer.x);
+	if vec2_length(deltaToPlayer) > HOSTAGE_FOLLOW_DISTANCE {
+		deltaToPlayer = 0;
+	}
+	
+	totalDelta := deltaToPlayer;
+
+	for hostage in game.hostages {
+		deltaToHostage := hostage.worldPosition - worldPosition;
+		distance := vec2_length(deltaToHostage);
+
+		if distance != 0 && distance <= HOSTAGE_FOLLOW_DISTANCE {
+			totalDelta -= vec2_normalise(deltaToHostage) * 20;
+		}
+	}
+	
+	for zombie in game.zombies {
+		deltaToZombie := zombie.worldPosition - worldPosition;
+		if vec2_length(deltaToZombie) <= HOSTAGE_SCARE_DISTANCE {
+			totalDelta -= vec2_normalise(deltaToZombie) * 25;
+		}
+	}
+
+	rotationRadians := math.atan2_f64(-totalDelta.y, totalDelta.x);
 	rotation = math.mod_f64(3600.0 + math.to_degrees_f64(rotationRadians), 360.0);
 	rotationVector: Vector2 = { math.cos_f64(rotationRadians), -math.sin_f64(rotationRadians) };
 	

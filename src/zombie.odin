@@ -39,7 +39,18 @@ destory_zombie :: proc(using zombie: ^Zombie, zombieIndex: int) {
 update_zombie :: proc(using zombie: ^Zombie, deltaTime: f64) {
 	// Rotation tracks the player
 	deltaToPlayer := game.player.worldPosition - worldPosition;
-	rotationRadians := math.atan2_f64(-deltaToPlayer.y, deltaToPlayer.x);
+	totalDelta := deltaToPlayer;
+
+	for zombie in game.zombies {
+		deltaToZombie := zombie.worldPosition - worldPosition;
+		distance := vec2_length(deltaToZombie);
+
+		if distance != 0 && distance <= HOSTAGE_SCARE_DISTANCE {
+			totalDelta -= vec2_normalise(deltaToZombie) * 20;
+		}
+	}
+
+	rotationRadians := math.atan2_f64(-totalDelta.y, totalDelta.x);
 	rotation = math.mod_f64(3600.0 + math.to_degrees_f64(rotationRadians), 360.0);
 	rotationVector: Vector2 = { math.cos_f64(rotationRadians), -math.sin_f64(rotationRadians) };
 	
