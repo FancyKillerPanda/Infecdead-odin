@@ -14,37 +14,16 @@ ZOMBIE_DAMAGE_COOLDOWN :: 0.5;
 ZOMBIE_HEALTH_BAR_HEIGHT :: 10;
 
 Zombie :: struct {
-	game: ^Game,
-
-	worldPosition: Vector2,
-	dimensions: Vector2,
-	rotation: f64,
-
-	velocity: Vector2,
-	acceleration: Vector2,
-
-	currentSpritesheet: ^Spritesheet,
-	walkSpritesheet: ^Spritesheet,
-
-	currentAnimationFrame: u32,
-	timeSinceLastFrameChange: f64,
-
-	health: f64,
+	using character: Character,
 	timeSinceLastDamageDealt: f64,
 }
 
 create_zombie :: proc(game: ^Game, position: Vector2) -> (zombie: Zombie) {
-	zombie.game = game;
+	init_character(game, &zombie, position);
 	
-	// TODO(fkp): Load this from the tilemap
-	zombie.worldPosition = position;
-	zombie.dimensions = { 64, 64 };
-
 	zombie.walkSpritesheet = new(Spritesheet);
 	init_spritesheet(zombie.walkSpritesheet, game.renderer, "res/enemies/zombie.png", zombie.dimensions, { 16, 16 }, 64, 8, nil, 0);
-
-	zombie.currentSpritesheet = zombie.walkSpritesheet;
-	zombie.health = 1.0;
+	zombie.currentSpritesheet = zombie.walkSpritesheet;	
 
 	return;
 }
@@ -58,13 +37,11 @@ update_zombie :: proc(using zombie: ^Zombie, deltaTime: f64) {
 	// Rotation tracks the player
 	deltaToPlayer := game.player.worldPosition - worldPosition;
 	rotationRadians := math.atan2_f64(-deltaToPlayer.y, deltaToPlayer.x);
-
 	rotation = math.mod_f64(3600.0 + math.to_degrees_f64(rotationRadians), 360.0);
-	sinRotation := math.sin_f64(rotationRadians);
-	cosRotation := math.cos_f64(rotationRadians);
+	rotationVector: Vector2 = { math.cos_f64(rotationRadians), -math.sin_f64(rotationRadians) };
 	
 	// Movement
-	acceleration = { cosRotation * ZOMBIE_WALK_ACC, -sinRotation * ZOMBIE_WALK_ACC };
+	acceleration = rotationVector * ZOMBIE_WALK_ACC;
 	velocity += acceleration * deltaTime;
 	velocity *= ZOMBIE_FRICTION;
 
@@ -72,42 +49,12 @@ update_zombie :: proc(using zombie: ^Zombie, deltaTime: f64) {
 	if abs(velocity.y) < 5.0 do velocity.y = 0;
 	
 	// Updates position and does collision checking
-	worldPosition.x += velocity.x * deltaTime;
-	worldPositionRect: sdl.Rect = {
-		i32(worldPosition.x - (dimensions.x / 2.0)),
-		i32(worldPosition.y - (dimensions.y / 4.0)),
-		i32(dimensions.x),
-		i32(dimensions.y / 2.0),
-	};
-
-	for object in &game.tilemap.objects {
-		if sdl.HasIntersection(&worldPositionRect, &object) {
-			worldPosition.x -= velocity.x * deltaTime;
-			velocity.x = 0;
-			break;
-		}
-	}
-
-	worldPosition.y += velocity.y * deltaTime;
-	worldPositionRect.x = i32(worldPosition.x - (dimensions.x / 2.0));
-	worldPositionRect.y = i32(worldPosition.y - (dimensions.y / 4.0));
-
-	for object in &game.tilemap.objects {
-		if sdl.HasIntersection(&worldPositionRect, &object) {
-			worldPosition.y -= velocity.y * deltaTime;
-			velocity.y = 0;
-			break;
-		}
-	}
-
-	worldPosition.x = clamp(worldPosition.x, dimensions.x / 2.0, (game.tilemap.dimensions.x * OUTPUT_TILE_SIZE.x) - (dimensions.x / 2.0));
-	worldPosition.y = clamp(worldPosition.y, dimensions.y / 2.0, (game.tilemap.dimensions.y * OUTPUT_TILE_SIZE.y) - (dimensions.y / 2.0));
+	update_character_position(zombie, deltaTime);
 	
 	// Checks for collision with player
 	timeSinceLastDamageDealt += deltaTime;
-	worldPositionRect.x = i32(worldPosition.x - (dimensions.x / 2.0));
-	worldPositionRect.y = i32(worldPosition.y - (dimensions.y / 4.0));
-	playerRect := create_sdl_rect(game.player.worldPosition - (game.player.dimensions / 2), game.player.dimensions / 2);
+	worldPositionRect := get_character_world_rect(zombie);
+	playerRect := get_character_world_rect(&game.player);
 
 	if timeSinceLastDamageDealt >= ZOMBIE_DAMAGE_COOLDOWN && sdl.HasIntersection(&worldPositionRect, &playerRect) {
 		timeSinceLastDamageDealt = 0;
@@ -115,20 +62,7 @@ update_zombie :: proc(using zombie: ^Zombie, deltaTime: f64) {
 	}
 
 	// Texturing
-	timeSinceLastFrameChange += deltaTime;
-	if timeSinceLastFrameChange >= 0.15 {
-		timeSinceLastFrameChange = 0;
-
-		currentAnimationFrame += 1;
-		currentAnimationFrame %= currentSpritesheet.subrectsPerRow;
-	}
-
-	if velocity == { 0, 0 } {
-		currentAnimationFrame = 0;
-	}
-
-	row := u32(math.mod_f64(rotation + 22.5, 360.0) / 45.0);
-	spritesheet_set_frame(currentSpritesheet, (row * currentSpritesheet.subrectsPerRow) + currentAnimationFrame);
+	update_character_texture(zombie, deltaTime);
 }
 
 draw_zombie :: proc(using zombie: ^Zombie, viewOffset: Vector2) {

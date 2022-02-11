@@ -18,7 +18,7 @@ init_chests :: proc(game: ^Game) {
 }
 
 update_chests :: proc(using game: ^Game) {
-	playerWorldPositionRect := get_player_world_rect(&player);
+	playerWorldPositionRect := get_character_world_rect(&player);
 	
 	// Since the player won't actually be touching the chest, this expands the player hit box
 	// slightly to check if they are near enough to it.

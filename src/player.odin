@@ -23,9 +23,9 @@ PISTOL_MIN_DAMAGE :: 0.2;
 PISTOL_MAX_DAMAGE :: 0.4;
 PISTOL_KNOCKBACK :: 5;
 
-Player :: struct {
+Character :: struct {
 	game: ^Game,
-	
+
 	worldPosition: Vector2,
 	dimensions: Vector2,
 	rotation: f64,
@@ -35,18 +35,22 @@ Player :: struct {
 
 	currentSpritesheet: ^Spritesheet,
 	walkSpritesheet: ^Spritesheet,
-	walkWithPistolSpritesheet: ^Spritesheet,
-	
+
 	currentAnimationFrame: u32,
 	timeSinceLastFrameChange: f64,
+
+	health: f64,
+}
+
+Player :: struct {
+	using character: Character,
+	walkWithPistolSpritesheet: ^Spritesheet,
 
 	inventorySlots: [4] InventoryItem,
 	currentlySelectedInventorySlot: u32,
 
 	activeBullets: [dynamic] Bullet,
 	timeSinceLastShot: f64,
-
-	health: f64,
 }
 
 InventoryItem :: struct {
@@ -78,20 +82,23 @@ Bullet :: struct {
 }
 
 create_player :: proc(game: ^Game) -> (player: Player) {
-	player.game = game;
+	init_character(game, &player, 0);
 	
-	player.dimensions = { 64, 64 };
-
 	player.walkSpritesheet = new(Spritesheet);
 	init_spritesheet(player.walkSpritesheet, game.renderer, "res/player/player.png", player.dimensions, { 16, 16 }, 32, 4, nil, 0);
 	player.walkWithPistolSpritesheet = new(Spritesheet);
 	init_spritesheet(player.walkWithPistolSpritesheet, game.renderer, "res/player/player_with_pistol.png", player.dimensions, { 16, 16 }, 32, 4, nil, 0);
-
-	player.currentSpritesheet = player.walkWithPistolSpritesheet;
-
-	player.health = 1.0;
+	player.currentSpritesheet = player.walkSpritesheet;	
 
 	return;
+}
+
+init_character :: proc(game: ^Game, character: ^Character, position: Vector2) {
+	character.game = game;
+
+	character.dimensions = { 64, 64 };
+	character.worldPosition = position;
+	character.health = 1.0;
 }
 
 handle_player_events :: proc(using player: ^Player, event: ^sdl.Event) {
@@ -128,29 +135,25 @@ handle_player_events :: proc(using player: ^Player, event: ^sdl.Event) {
 
 update_player :: proc(using player: ^Player, deltaTime: f64) {
 	rotationRadians := math.to_radians_f64(rotation);
-	sinRotation := math.sin_f64(rotationRadians);
-	cosRotation := math.cos_f64(rotationRadians);
+	rotationVector: Vector2 = { math.cos_f64(rotationRadians), -math.sin_f64(rotationRadians) };
 	
 	// Movement
 	acceleration = { 0, 0 };
 	if game.keysPressed[sdl.Scancode.W] {
-		acceleration.x = cosRotation * PLAYER_WALK_ACC;
-		acceleration.y = -sinRotation * PLAYER_WALK_ACC;
+		acceleration = rotationVector * PLAYER_WALK_ACC;
 	}
 	if game.keysPressed[sdl.Scancode.S] {
-		acceleration.x = cosRotation * -PLAYER_WALK_ACC * 0.5;
-		acceleration.y = -sinRotation * -PLAYER_WALK_ACC * 0.5;
+		acceleration = rotationVector * -PLAYER_WALK_ACC * 0.5;
 	}
 	if game.keysPressed[sdl.Scancode.A] {
 		rotation += PLAYER_ROTATION_SPEED;
-		rotation = math.mod_f64(rotation, 360.0);
 	}
 	if game.keysPressed[sdl.Scancode.D] {
 		rotation += 360.0;
 		rotation -= PLAYER_ROTATION_SPEED;
-		rotation = math.mod_f64(rotation, 360.0);
 	}
-
+	
+	rotation = math.mod_f64(rotation, 360.0);
 	velocity += acceleration * deltaTime;
 	velocity *= PLAYER_FRICTION;
 
@@ -158,8 +161,57 @@ update_player :: proc(using player: ^Player, deltaTime: f64) {
 	if abs(velocity.y) < 5.0 do velocity.y = 0;
 	
 	// Updates position and does collision checking
+	update_character_position(player, deltaTime);
+
+	// Shooting
+	timeSinceLastShot += deltaTime;
+
+	bulletLoop: for bulletIndex := 0; bulletIndex < len(activeBullets); {
+		bullet := &activeBullets[bulletIndex];
+		bullet.worldPosition += bullet.velocity * deltaTime;
+
+		bullet.lifeTime += deltaTime;
+		if bullet.lifeTime >= PISTOL_SHOT_LIFETIME ||
+		   bullet.worldPosition.x < 0 || bullet.worldPosition.y < 0 ||
+		   bullet.worldPosition.x > game.currentWorldDimensions.x || bullet.worldPosition.y > game.currentWorldDimensions.y {
+			destroy_bullet(player, bulletIndex);
+			continue;
+		}
+
+		bulletRect := create_sdl_rect(bullet.worldPosition - bullet.spritesheet.outputSize, bullet.spritesheet.outputSize);
+
+		for zombie, zombieIndex in &game.zombies {
+			zombieRect := create_sdl_rect(zombie.worldPosition - (zombie.dimensions / 2), zombie.dimensions);
+			
+			if sdl.HasIntersection(&bulletRect, &zombieRect) {
+				zombie.health -= bullet.damage;
+				if zombie.health <= 0.0 {
+					destory_zombie(&zombie, zombieIndex);
+				} else {
+					zombie.worldPosition += vec2_normalise(bullet.velocity) * PISTOL_KNOCKBACK;
+				}
+
+				destroy_bullet(player, bulletIndex);
+				continue bulletLoop;
+			}
+		}
+
+		bulletIndex += 1;
+	}
+	
+	// Texturing
+	if inventorySlots[currentlySelectedInventorySlot].type == .Empty {
+		currentSpritesheet = walkSpritesheet;
+	} else if inventorySlots[currentlySelectedInventorySlot].type == .Pistol {
+		currentSpritesheet = walkWithPistolSpritesheet;
+	}
+	
+	update_character_texture(player, deltaTime);
+}
+
+update_character_position :: proc(using character: ^Character, deltaTime: f64) {
 	worldPosition.x += velocity.x * deltaTime;
-	worldPositionRect := get_player_world_rect(player);
+	worldPositionRect := get_character_world_rect(character);
 
 	for object in &game.tilemap.objects {
 		if sdl.HasIntersection(&worldPositionRect, &object) {
@@ -170,7 +222,7 @@ update_player :: proc(using player: ^Player, deltaTime: f64) {
 	}
 
 	worldPosition.y += velocity.y * deltaTime;
-	worldPositionRect = get_player_world_rect(player);
+	worldPositionRect = get_character_world_rect(character);
 
 	for object in &game.tilemap.objects {
 		if sdl.HasIntersection(&worldPositionRect, &object) {
@@ -182,64 +234,9 @@ update_player :: proc(using player: ^Player, deltaTime: f64) {
 
 	worldPosition.x = clamp(worldPosition.x, dimensions.x / 2.0, (game.tilemap.dimensions.x * OUTPUT_TILE_SIZE.x) - (dimensions.x / 2.0));
 	worldPosition.y = clamp(worldPosition.y, dimensions.y / 2.0, (game.tilemap.dimensions.y * OUTPUT_TILE_SIZE.y) - (dimensions.y / 2.0));
-	
-	// Shooting
-	timeSinceLastShot += deltaTime;
+}
 
-	bulletLoop: for bulletIndex := 0; bulletIndex < len(activeBullets); {
-		bullet := &activeBullets[bulletIndex];
-		bullet.worldPosition += bullet.velocity * deltaTime;
-
-		bullet.lifeTime += deltaTime;
-		if bullet.lifeTime >= PISTOL_SHOT_LIFETIME {
-			destroy_bullet(player, bulletIndex);
-			continue;
-		}
-
-		if bullet.worldPosition.x < 0 || bullet.worldPosition.y < 0 ||
-		   bullet.worldPosition.x > game.currentWorldDimensions.x || bullet.worldPosition.y > game.currentWorldDimensions.y {
-			destroy_bullet(player, bulletIndex);
-			continue;
-		}
-
-		bulletRect := create_sdl_rect(bullet.worldPosition - bullet.spritesheet.outputSize, bullet.spritesheet.outputSize);
-
-		for zombieIndex := 0; zombieIndex < len(game.zombies); {
-			zombie := &game.zombies[zombieIndex];
-			zombieRect: sdl.Rect = {
-				i32(zombie.worldPosition.x - (zombie.dimensions.x / 2)),
-				i32(zombie.worldPosition.y - (zombie.dimensions.y / 2)),
-				i32(zombie.dimensions.x),
-				i32(zombie.dimensions.y),
-			};
-			
-			if sdl.HasIntersection(&bulletRect, &zombieRect) {
-				zombie.health -= bullet.damage;
-				if zombie.health <= 0.0 {
-					destory_zombie(zombie, zombieIndex);
-				} else {
-					zombie.worldPosition += vec2_normalise(bullet.velocity) * PISTOL_KNOCKBACK;
-				}
-
-				destroy_bullet(player, bulletIndex);
-
-				continue bulletLoop;
-			}
-
-			zombieIndex += 1;
-		}
-
-		bulletIndex += 1;
-	}
-	
-	// Texturing
-	// update_spritesheet(player.currentSpritesheet, deltaTime);
-	if inventorySlots[currentlySelectedInventorySlot].type == .Empty {
-		currentSpritesheet = walkSpritesheet;
-	} else if inventorySlots[currentlySelectedInventorySlot].type == .Pistol {
-		currentSpritesheet = walkWithPistolSpritesheet;
-	}
-	
+update_character_texture :: proc(using character: ^Character, deltaTime: f64) {
 	timeSinceLastFrameChange += deltaTime;
 	if timeSinceLastFrameChange >= 0.15 {
 		timeSinceLastFrameChange = 0;
@@ -292,19 +289,9 @@ draw_player_health_bar :: proc(using player: ^Player) {
 		}
 	}
 	
-	fullHealthBarRect: sdl.Rect = {
-		i32(game.screenDimensions.x * 2 / 100),
-		i32(game.screenDimensions.y * 2 / 100),
-		i32(PLAYER_HEALTH_BAR_WIDTH),
-		i32(PLAYER_HEALTH_BAR_HEIGHT),
-	}
-
-	healthBarRect: sdl.Rect = {
-		fullHealthBarRect.x,
-		fullHealthBarRect.y,
-		i32(f64(fullHealthBarRect.w) * health),
-		fullHealthBarRect.h,
-	};
+	fullHealthBarRect := create_sdl_rect(game.screenDimensions * 2 / 100, { PLAYER_HEALTH_BAR_WIDTH, PLAYER_HEALTH_BAR_HEIGHT });
+	healthBarRect := fullHealthBarRect;
+	healthBarRect.w = i32(f64(healthBarRect.w) * health);
 	
 	colour := get_health_colour(health);
 	sdl.SetRenderDrawColor(game.renderer, colour.r, colour.g, colour.b, colour.a);
@@ -337,16 +324,16 @@ draw_player_health_bar :: proc(using player: ^Player) {
 }
 
 shoot :: proc(using player: ^Player) {
-	if inventorySlots[currentlySelectedInventorySlot].type == .Pistol {
-		if inventorySlots[currentlySelectedInventorySlot].data.(PistolData).bulletsLeft > 0 {
+	slot := inventorySlots[currentlySelectedInventorySlot];
+	if slot.type == .Pistol {
+		if slot.data.(PistolData).bulletsLeft > 0 {
 			if timeSinceLastShot >= PISTOL_SHOT_COOLDOWN {
 				timeSinceLastShot = 0;
-				(&inventorySlots[currentlySelectedInventorySlot].data.(PistolData)).bulletsLeft -= 1;
+				(&slot.data.(PistolData)).bulletsLeft -= 1;
 
-				newText := fmt.tprintf("{}/{}", inventorySlots[currentlySelectedInventorySlot].data.(PistolData).bulletsLeft,
-												inventorySlots[currentlySelectedInventorySlot].data.(PistolData).maxBullets);
-				free_text(&inventorySlots[currentlySelectedInventorySlot].currentText);
-				inventorySlots[currentlySelectedInventorySlot].currentText = create_text(game.renderer, game.menu.textFont, strings.clone_to_cstring(newText));
+				newText := fmt.tprintf("{}/{}", slot.data.(PistolData).bulletsLeft, slot.data.(PistolData).maxBullets);
+				free_text(&slot.currentText);
+				slot.currentText = create_text(game.renderer, game.menu.textFont, strings.clone_to_cstring(newText));
 
 				append(&activeBullets, create_pistol_bullet(player));
 			}
@@ -387,15 +374,13 @@ use_item :: proc(using player: ^Player) {
 	}
 }
 
-get_player_world_rect :: proc(using player: ^Player) -> (rect: sdl.Rect) {
-	rect = sdl.Rect {
+get_character_world_rect :: proc(using character: ^Character) -> sdl.Rect {
+	return {
 		i32(worldPosition.x - (dimensions.x / 2.0)),
 		i32(worldPosition.y + (dimensions.y / 4.0)),
 		i32(dimensions.x),
 		i32(dimensions.y / 2.0),
 	};
-
-	return;
 }
 
 swap_current_slot_with_chest :: proc(using player: ^Player) {
