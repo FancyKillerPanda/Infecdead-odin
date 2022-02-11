@@ -8,7 +8,7 @@ import "core:strings"
 import sdl "vendor:sdl2"
 
 PLAYER_WALK_ACC :: 1000;
-PLAYER_FRICTION :: 0.90;
+PLAYER_FRICTION :: 0.9;
 PLAYER_ROTATION_SPEED :: 7;
 
 PLAYER_HEALTH_BAR_WIDTH :: 400;
@@ -25,6 +25,11 @@ PISTOL_KNOCKBACK :: 5;
 
 Character :: struct {
 	game: ^Game,
+	type: enum {
+		Player,
+		Zombie,
+		Hostage,
+	},
 
 	worldPosition: Vector2,
 	dimensions: Vector2,
@@ -83,12 +88,13 @@ Bullet :: struct {
 
 create_player :: proc(game: ^Game) -> (player: Player) {
 	init_character(game, &player, 0);
+	player.type = .Player;
 	
 	player.walkSpritesheet = new(Spritesheet);
 	init_spritesheet(player.walkSpritesheet, game.renderer, "res/player/player.png", player.dimensions, { 16, 16 }, 32, 4, nil, 0);
 	player.walkWithPistolSpritesheet = new(Spritesheet);
 	init_spritesheet(player.walkWithPistolSpritesheet, game.renderer, "res/player/player_with_pistol.png", player.dimensions, { 16, 16 }, 32, 4, nil, 0);
-	player.currentSpritesheet = player.walkSpritesheet;	
+	player.currentSpritesheet = player.walkSpritesheet;
 
 	return;
 }
@@ -276,7 +282,7 @@ draw_player_on_minimap :: proc(using player: ^Player, minimapPosition: Vector2) 
 
 healthBarFrame: f64;
 
-draw_player_health_bar :: proc(using player: ^Player) {
+draw_character_health_bar :: proc(using character: ^Character, viewOffset: Vector2) {
 	get_health_colour :: proc(health: f64) -> sdl.Colour {
 		if health > 0.75 {
 			return { 0, 192, 0, 255 };
@@ -289,38 +295,64 @@ draw_player_health_bar :: proc(using player: ^Player) {
 		}
 	}
 	
-	fullHealthBarRect := create_sdl_rect(game.screenDimensions * 2 / 100, { PLAYER_HEALTH_BAR_WIDTH, PLAYER_HEALTH_BAR_HEIGHT });
-	healthBarRect := fullHealthBarRect;
-	healthBarRect.w = i32(f64(healthBarRect.w) * health);
-	
-	colour := get_health_colour(health);
-	sdl.SetRenderDrawColor(game.renderer, colour.r, colour.g, colour.b, colour.a);
-	sdl.RenderFillRect(game.renderer, &healthBarRect);
+	if type == .Player {
+		player := cast(^Player) character;
 
-	if inventorySlots[currentlySelectedInventorySlot].type == .MedKit {
-		healthBarRect.x += healthBarRect.w;
-		healthBarRect.w = i32(f64(fullHealthBarRect.w) * MED_KIT_HEALTH_BOOST);
-
-		if healthBarRect.x + healthBarRect.w > fullHealthBarRect.x + fullHealthBarRect.w {
-			healthBarRect.w = (fullHealthBarRect.x + fullHealthBarRect.w) - healthBarRect.x;
-		}
-
-		colour = get_health_colour(health + MED_KIT_HEALTH_BOOST);
-		sdl.SetRenderDrawColor(game.renderer, colour.r, colour.g, colour.b, u8(((math.sin(healthBarFrame) + 1) / 2) * 127));
+		fullHealthBarRect := create_sdl_rect(game.screenDimensions * 2 / 100, { PLAYER_HEALTH_BAR_WIDTH, PLAYER_HEALTH_BAR_HEIGHT });
+		healthBarRect := fullHealthBarRect;
+		healthBarRect.w = i32(f64(healthBarRect.w) * health);
+		
+		colour := get_health_colour(health);
+		sdl.SetRenderDrawColor(game.renderer, colour.r, colour.g, colour.b, colour.a);
 		sdl.RenderFillRect(game.renderer, &healthBarRect);
+		
+		if player.inventorySlots[player.currentlySelectedInventorySlot].type == .MedKit {
+			healthBarRect.x += healthBarRect.w;
+			healthBarRect.w = i32(f64(fullHealthBarRect.w) * MED_KIT_HEALTH_BOOST);
 
-		healthBarFrame += 0.1;
+			if healthBarRect.x + healthBarRect.w > fullHealthBarRect.x + fullHealthBarRect.w {
+				healthBarRect.w = (fullHealthBarRect.x + fullHealthBarRect.w) - healthBarRect.x;
+			}
+
+			colour = get_health_colour(health + MED_KIT_HEALTH_BOOST);
+			sdl.SetRenderDrawColor(game.renderer, colour.r, colour.g, colour.b, u8(((math.sin(healthBarFrame) + 1) / 2) * 127));
+			sdl.RenderFillRect(game.renderer, &healthBarRect);
+
+			healthBarFrame += 0.1;
+		}
+		
+		sdl.SetRenderDrawColor(game.renderer, 0, 0, 0, 255);
+		sdl.RenderDrawRect(game.renderer, &fullHealthBarRect);
+		
+		// Draws a second pixel of outline
+		fullHealthBarRect.x += 1;
+		fullHealthBarRect.y += 1;
+		fullHealthBarRect.w -= 2;
+		fullHealthBarRect.h -= 2;
+		sdl.RenderDrawRect(game.renderer, &fullHealthBarRect);
+	} else {
+		if health < 1.0 {
+			fullHealthBarRect: sdl.Rect = {
+				i32(worldPosition.x - viewOffset.x - (dimensions.x / 2)),
+				i32((worldPosition.y - viewOffset.y - (dimensions.y / 2)) - (ZOMBIE_HEALTH_BAR_HEIGHT * 2)),
+				i32(dimensions.x),
+				i32(ZOMBIE_HEALTH_BAR_HEIGHT),
+			}
+	
+			healthBarRect: sdl.Rect = {
+				fullHealthBarRect.x,
+				fullHealthBarRect.y,
+				i32(f64(fullHealthBarRect.w) * health),
+				fullHealthBarRect.h,
+			};
+	
+			
+			sdl.SetRenderDrawColor(game.renderer, 0, 255, 0, 255);
+			sdl.RenderFillRect(game.renderer, &healthBarRect);
+			sdl.SetRenderDrawColor(game.renderer, 0, 0, 0, 255);
+			sdl.RenderDrawRect(game.renderer, &fullHealthBarRect);
+		}
 	}
-	
-	sdl.SetRenderDrawColor(game.renderer, 0, 0, 0, 255);
-	sdl.RenderDrawRect(game.renderer, &fullHealthBarRect);
-	
-	// Draws a second pixel of outline
-	fullHealthBarRect.x += 1;
-	fullHealthBarRect.y += 1;
-	fullHealthBarRect.w -= 2;
-	fullHealthBarRect.h -= 2;
-	sdl.RenderDrawRect(game.renderer, &fullHealthBarRect);
 }
 
 shoot :: proc(using player: ^Player) {

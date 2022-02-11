@@ -358,6 +358,30 @@
                  "width":0,
                  "x":880,
                  "y":784
+                }, 
+                {
+                 "height":0,
+                 "id":33,
+                 "name":"Hostage",
+                 "point":true,
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":0,
+                 "x":880,
+                 "y":880
+                }, 
+                {
+                 "height":0,
+                 "id":34,
+                 "name":"Hostage",
+                 "point":true,
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":0,
+                 "x":832,
+                 "y":896
                 }],
          "opacity":1,
          "type":"objectgroup",
@@ -366,7 +390,7 @@
          "y":0
         }],
  "nextlayerid":11,
- "nextobjectid":33,
+ "nextobjectid":35,
  "orientation":"orthogonal",
  "renderorder":"right-down",
  "tiledversion":"1.7.2",

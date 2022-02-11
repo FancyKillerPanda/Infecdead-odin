@@ -45,6 +45,7 @@ SpawnPoint :: struct {
 EntityType :: enum {
 	Player,
 	Zombie,
+	Hostage,
 	Chest,
 }
 
@@ -180,6 +181,7 @@ add_spawn_points :: proc(using tilemap: ^Tilemap, layer: json.Object) {
 		switch value.(json.Object)["name"].(json.String) {
 			case "Player":entityType = .Player;
 			case "Zombie": entityType = .Zombie;
+			case "Hostage": entityType = .Hostage;
 			
 			case "Chest":
 				entityType = .Chest;
@@ -330,18 +332,22 @@ advance_position :: proc(currentRow: ^i32, currentColumn: ^i32, tilemap: ^Tilema
 	}
 }
 
-// This function will spawn zombies and other enemies, but only set the location
+// This function will spawn zombies and other characters, but only set the location
 // of the player (it assumes the player has already been initialised).
 spawn_entities :: proc(using tilemap: ^Tilemap) {
 	for spawnPoint in spawnPoints {
-		#partial switch spawnPoint.entityType {
+		switch spawnPoint.entityType {
+			case .Chest:
+				// Do nothing
+			
 			case .Player:
 				game.player.worldPosition = spawnPoint.worldPosition;
 
 			case .Zombie:
 				append(&game.zombies, create_zombie(game, spawnPoint.worldPosition));
-
-
+				
+			case .Hostage:
+				append(&game.hostages, create_hostage(game, spawnPoint.worldPosition));
 		}
 	}
 }

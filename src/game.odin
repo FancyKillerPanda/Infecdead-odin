@@ -23,6 +23,7 @@ Game :: struct {
 	player: Player,
 	tilemap: Tilemap,
 	zombies: [dynamic] Zombie,
+	hostages: [dynamic] Hostage,
 	chests: [dynamic] Chest,
 
 	viewOffset: Vector2,
@@ -61,6 +62,7 @@ init_game :: proc(using game: ^Game) -> bool {
 
 reset_game :: proc(using game: ^Game) {
 	clear(&zombies);
+	clear(&hostages);
 	spawn_entities(&tilemap);
 }
 
@@ -139,6 +141,10 @@ update_game :: proc(using game: ^Game, deltaTime: f64) {
 		for zombie in &zombies {
 			update_zombie(&zombie, deltaTime);
 		}
+		
+		for hostage in &hostages {
+			update_hostage(&hostage, deltaTime);
+		}
 
 		update_chests(game);
 		
@@ -184,12 +190,16 @@ draw_gameplay :: proc(using game: ^Game) {
 	for zombie in &zombies {
 		draw_zombie(&zombie, viewOffset);
 	}
+
+	for hostage in &hostages {
+		draw_hostage(&hostage, viewOffset);
+	}
 	
 	draw_tilemap_second_pass(&tilemap, viewOffset);
 
 	draw_minimap(&tilemap);
 	draw_inventory_slots(game);
-	draw_player_health_bar(&player);
+	draw_character_health_bar(&player, 0);
 }
 
 draw_paused :: proc(using game: ^Game) {
