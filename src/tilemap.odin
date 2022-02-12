@@ -20,6 +20,7 @@ Tilemap :: struct {
 	
 	objects: [dynamic] sdl.Rect,
 	spawnPoints: [dynamic] SpawnPoint,
+	hostageCollectionRect: sdl.Rect,
 
 	// Caches the rendered output
 	texturesAreDirty: bool,
@@ -159,12 +160,22 @@ add_collisions_layer :: proc(using tilemap: ^Tilemap, outputTileSize: Vector2, l
 	reserve(&objects, len(objects) + len(objectValues));
 	
 	for value in objectValues {
-		append(&objects, sdl.Rect {
-			cast(i32) (f64(value.(json.Object)["x"].(json.Integer)) * scale.x),
-			cast(i32) (f64(value.(json.Object)["y"].(json.Integer)) * scale.y),
-			cast(i32) (f64(value.(json.Object)["width"].(json.Integer)) * scale.x),
-			cast(i32) (f64(value.(json.Object)["height"].(json.Integer)) * scale.y),
-		});
+		if value.(json.Object)["name"].(json.String) == "Hostage Collection" {
+			hostageCollectionRect = {
+				cast(i32) (f64(value.(json.Object)["x"].(json.Integer)) * scale.x),
+				cast(i32) (f64(value.(json.Object)["y"].(json.Integer)) * scale.y),
+				cast(i32) (f64(value.(json.Object)["width"].(json.Integer)) * scale.x),
+				cast(i32) (f64(value.(json.Object)["height"].(json.Integer)) * scale.y),
+			};
+		} else {
+			append(&objects, sdl.Rect {
+				cast(i32) (f64(value.(json.Object)["x"].(json.Integer)) * scale.x),
+				cast(i32) (f64(value.(json.Object)["y"].(json.Integer)) * scale.y),
+				cast(i32) (f64(value.(json.Object)["width"].(json.Integer)) * scale.x),
+				cast(i32) (f64(value.(json.Object)["height"].(json.Integer)) * scale.y),
+			});
+		}
+		
 	}
 }
 

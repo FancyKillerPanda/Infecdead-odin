@@ -23,8 +23,11 @@ Game :: struct {
 	player: Player,
 	tilemap: Tilemap,
 	zombies: [dynamic] Zombie,
-	hostages: [dynamic] Hostage,
 	chests: [dynamic] Chest,
+	
+	hostages: [dynamic] Hostage,
+	hostagesSaved: u32,
+	hostagesLeft: u32,
 
 	viewOffset: Vector2,
 
@@ -142,8 +145,11 @@ update_game :: proc(using game: ^Game, deltaTime: f64) {
 			update_zombie(&zombie, deltaTime);
 		}
 		
-		for hostage in &hostages {
-			update_hostage(&hostage, deltaTime);
+		for i := 0; i < len(hostages); {
+			hostage := &hostages[i];
+			if update_hostage(hostage, i, deltaTime) {
+				i += 1;
+			}
 		}
 
 		update_chests(game);
@@ -248,7 +254,7 @@ create_window :: proc(game: ^Game) -> (success: bool) {
 	// TODO(fkp): Allow toggling between fullscreen and windowed
 	displayMode: sdl.DisplayMode;
 	sdl.GetCurrentDisplayMode(0, &displayMode);
-	
+
 	WINDOW_FLAGS :: sdl.WindowFlags {};
 
 	if sdl.WindowFlag.FULLSCREEN in WINDOW_FLAGS {

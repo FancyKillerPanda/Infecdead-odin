@@ -141,7 +141,7 @@ handle_player_events :: proc(using player: ^Player, event: ^sdl.Event) {
 
 update_player :: proc(using player: ^Player, deltaTime: f64) {
 	rotationRadians := math.to_radians_f64(rotation);
-	rotationVector: Vector2 = { math.cos_f64(rotationRadians), -math.sin_f64(rotationRadians) };
+	rotationVector := vec2_normalise({ math.cos_f64(rotationRadians), -math.sin_f64(rotationRadians) });
 	
 	// Movement
 	acceleration = { 0, 0 };

@@ -5,7 +5,7 @@ import "core:math/rand"
 
 import sdl "vendor:sdl2"
 
-HOSTAGE_WALK_ACC :: 700;
+HOSTAGE_WALK_ACC :: 650;
 HOSTAGE_FRICTION :: 0.9;
 HOSTAGE_FOLLOW_DISTANCE :: 300;
 HOSTAGE_SCARE_DISTANCE :: 300;
@@ -33,7 +33,7 @@ destory_hostage :: proc(using hostage: ^Hostage, hostageIndex: int) {
 	ordered_remove(&game.hostages, hostageIndex);
 }
 
-update_hostage :: proc(using hostage: ^Hostage, deltaTime: f64) {
+update_hostage :: proc(using hostage: ^Hostage, hostageIndex: int, deltaTime: f64) -> bool{
 	// Rotation tracks the player, but stays away from zombies
 	deltaToPlayer := game.player.worldPosition - worldPosition;
 	if vec2_length(deltaToPlayer) > HOSTAGE_FOLLOW_DISTANCE {
@@ -60,12 +60,16 @@ update_hostage :: proc(using hostage: ^Hostage, deltaTime: f64) {
 
 	rotationRadians := math.atan2_f64(-totalDelta.y, totalDelta.x);
 	rotation = math.mod_f64(3600.0 + math.to_degrees_f64(rotationRadians), 360.0);
-	rotationVector: Vector2 = { math.cos_f64(rotationRadians), -math.sin_f64(rotationRadians) };
+	rotationVector := vec2_normalise({ math.cos_f64(rotationRadians), -math.sin_f64(rotationRadians) });
 	
 	// Movement
-	acceleration = rotationVector * ZOMBIE_WALK_ACC;
+	if totalDelta == 0 {
+		acceleration = 0;
+	} else {
+		acceleration = rotationVector * HOSTAGE_WALK_ACC;
+	}
 	velocity += acceleration * deltaTime;
-	velocity *= ZOMBIE_FRICTION;
+	velocity *= HOSTAGE_FRICTION;
 
 	if abs(velocity.x) < 5.0 do velocity.x = 0;
 	if abs(velocity.y) < 5.0 do velocity.y = 0;
@@ -73,8 +77,19 @@ update_hostage :: proc(using hostage: ^Hostage, deltaTime: f64) {
 	// Updates position and does collision checking
 	update_character_position(hostage, deltaTime);
 
+	worldRect := get_character_world_rect(hostage);
+	if sdl.HasIntersection(&worldRect, &game.tilemap.hostageCollectionRect) {
+		game.hostagesSaved += 1;
+		game.hostagesLeft -= 1;
+
+		destory_hostage(hostage, hostageIndex);
+		return false;
+	}
+
 	// Texturing
 	update_character_texture(hostage, deltaTime);
+
+	return true;
 }
 
 draw_hostage :: proc(using hostage: ^Hostage, viewOffset: Vector2) {
