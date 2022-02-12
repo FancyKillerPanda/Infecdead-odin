@@ -9,6 +9,18 @@ import sdl "vendor:sdl2"
 OUTPUT_TILE_SIZE: Vector2 : { 32, 32 };
 MINIMAP_TILE_SIZE: Vector2 : { 2, 2 };
 
+GAME_OVER_WON_TEXT :: \
+`Congrats! You have successfully thwarted the zombie invasion,
+and have earned the respect of every member in your village.
+
+Enjoy your new-found fame, you deserve it!`;
+
+GAME_OVER_LOST_TEXT :: \
+`Yikes! The zombies have converted you, the last hope of the
+village. Without you, the village fell in minutes.
+
+This is your fault.`;
+
 Game :: struct {
 	running: bool,
 	state: GameState,
@@ -21,6 +33,14 @@ Game :: struct {
 	keysPressed: [sdl.Scancode.NUM_SCANCODES] bool,
 
 	menu: Menu,
+
+	gameWon: bool,
+	gameWonText: Text,
+	gameWonExtraText: Text,
+	gameLostText: Text,
+	gameLostExtraText: Text,
+	gameOverWonMenu: ButtonGroup,
+	gameOverLostMenu: ButtonGroup,
 	
 	player: Player,
 	tilemap: Tilemap,
@@ -45,6 +65,7 @@ GameState :: enum {
 	Menu,
 	Playing,
 	Paused,
+	GameOver,
 }
 
 init_game :: proc(using game: ^Game) -> bool {
@@ -55,6 +76,13 @@ init_game :: proc(using game: ^Game) -> bool {
 	menu = create_menu(game);
 	player = create_player(game);
 	init_chests(game);
+	
+	gameWonText = create_text(renderer, menu.titleFont, "What zombie invasion?", { 0, 255, 0, 255 });
+	gameWonExtraText = create_text(renderer, menu.textFont, GAME_OVER_WON_TEXT);
+	gameOverWonMenu = create_button_group(renderer, menu.textFont, { "Play Again", "Menu" });
+	gameLostText = create_text(renderer, menu.titleFont, "You Lost!", { 255, 0, 0, 255 });
+	gameLostExtraText = create_text(renderer, menu.textFont, GAME_OVER_LOST_TEXT);
+	gameOverLostMenu = create_button_group(renderer, menu.textFont, { "Retry", "Menu" });
 	
 	init_spritesheet(&inventorySlotBackground, renderer, "res/ui/inventory_slot_background.png", { 0, 0 }, { 0, 0 }, 1, 1, nil, 0);
 	init_spritesheet(&inventorySlotBackgroundSelected, renderer, "res/ui/inventory_slot_background_selected.png", { 0, 0 }, { 0, 0 }, 1, 1, nil, 0);
@@ -129,6 +157,9 @@ handle_events :: proc(using game: ^Game) {
 
 							case .Paused:
 								state = .Playing;
+
+							case .GameOver:
+								state = .Menu;
 						}
 				}
 
@@ -192,6 +223,9 @@ draw_game :: proc(using game: ^Game) {
 
 		case .Paused:
 			draw_paused(game);
+
+		case .GameOver:
+			draw_game_over(game);
 	}
 	
 	sdl.RenderPresent(renderer);
@@ -222,6 +256,24 @@ draw_gameplay :: proc(using game: ^Game) {
 draw_paused :: proc(using game: ^Game) {
 	draw_gameplay(game);
 	draw_dark_overlay(game);
+}
+
+draw_game_over :: proc(using game: ^Game) {
+	draw_tilemap_first_pass(&game.tilemap, viewOffset);
+	draw_chests(game, viewOffset);
+	draw_tilemap_second_pass(&game.tilemap, viewOffset);
+
+	draw_dark_overlay(game);
+	
+	if gameWon {
+		draw_text(&gameWonText, { screenDimensions.x / 2, screenDimensions.y / 4 });
+		draw_text(&gameWonExtraText, { screenDimensions.x / 2, screenDimensions.y / 2 });
+		draw_button_group(&gameOverWonMenu, { screenDimensions.x / 2, screenDimensions.y * 7 / 10 }, { screenDimensions.x / 4, 0 });
+	} else {
+		draw_text(&gameLostText, { screenDimensions.x / 2, screenDimensions.y / 4 });
+		draw_text(&gameLostExtraText, { screenDimensions.x / 2, screenDimensions.y / 2 });
+		draw_button_group(&gameOverLostMenu, { screenDimensions.x / 2, screenDimensions.y * 7 / 10 }, { screenDimensions.x / 4, 0 });
+	}
 }
 
 draw_dark_overlay :: proc(using game: ^Game) {
