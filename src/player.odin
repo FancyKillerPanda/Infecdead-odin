@@ -299,7 +299,15 @@ draw_character_health_bar :: proc(using character: ^Character, viewOffset: Vecto
 	if type == .Player {
 		player := cast(^Player) character;
 
-		fullHealthBarRect := create_sdl_rect(game.screenDimensions * 2 / 100, { PLAYER_HEALTH_BAR_WIDTH, PLAYER_HEALTH_BAR_HEIGHT });
+		// Draws the icon (we can't use draw_spritesheet() here because
+		// we need to specify the size, not just the position.)
+		iconRect := create_sdl_rect({ game.screenDimensions.x * 1 / 150, game.screenDimensions.y * 2 / 100 },
+									{ PLAYER_HEALTH_BAR_HEIGHT, PLAYER_HEALTH_BAR_HEIGHT });
+		sdl.RenderCopy(game.renderer, game.medKitIcon.texture, nil, &iconRect);
+
+		// Draws the health bar itself
+		fullHealthBarRect := create_sdl_rect({ game.screenDimensions.x * 4 / 100, game.screenDimensions.y * 2 / 100 },
+											 { PLAYER_HEALTH_BAR_WIDTH, PLAYER_HEALTH_BAR_HEIGHT });
 		healthBarRect := fullHealthBarRect;
 		healthBarRect.w = i32(f64(healthBarRect.w) * health);
 		
