@@ -245,11 +245,21 @@ draw_inventory_slots :: proc(using game: ^Game) {
 }
 
 create_window :: proc(game: ^Game) -> (success: bool) {
-	// TODO(fkp): Determine this based on monitor size
 	// TODO(fkp): Allow toggling between fullscreen and windowed
-	game.screenDimensions = { 1920, 1080 };
+	displayMode: sdl.DisplayMode;
+	sdl.GetCurrentDisplayMode(0, &displayMode);
 	
-	game.window = sdl.CreateWindow("Infecdead", 0, 0, i32(game.screenDimensions.x), i32(game.screenDimensions.y), nil);
+	WINDOW_FLAGS :: sdl.WindowFlags {};
+
+	if sdl.WindowFlag.FULLSCREEN in WINDOW_FLAGS {
+		game.screenDimensions = { f64(displayMode.w), f64(displayMode.h) };
+	} else {
+		size := min(displayMode.w / 16, displayMode.h / 9);
+		size -= 10; // Makes the window a bit smaller than the screen size
+		game.screenDimensions = { f64(size * 16), f64(size * 9) };
+	}
+	
+	game.window = sdl.CreateWindow("Infecdead", 0, 0, i32(game.screenDimensions.x), i32(game.screenDimensions.y), WINDOW_FLAGS);
 	if game.window == nil {
 		printf("Error: Failed to create window. Message: '{}'\n", sdl.GetError());
 		return false;
