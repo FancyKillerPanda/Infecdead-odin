@@ -1,5 +1,7 @@
 package main;
 
+import "core:fmt"
+import "core:strings"
 import "core:time"
 
 import sdl "vendor:sdl2"
@@ -28,6 +30,7 @@ Game :: struct {
 	hostages: [dynamic] Hostage,
 	hostagesSaved: u32,
 	hostagesLeft: u32,
+	hostagesProgressText: Text,
 
 	viewOffset: Vector2,
 
@@ -35,6 +38,7 @@ Game :: struct {
 	inventorySlotBackgroundSelected: Spritesheet,
 	pistolIcon: Spritesheet,
 	medKitIcon: Spritesheet,
+	hostageIcon: Spritesheet,
 }
 
 GameState :: enum {
@@ -56,7 +60,8 @@ init_game :: proc(using game: ^Game) -> bool {
 	init_spritesheet(&inventorySlotBackgroundSelected, renderer, "res/ui/inventory_slot_background_selected.png", { 0, 0 }, { 0, 0 }, 1, 1, nil, 0);
 	init_spritesheet(&pistolIcon, renderer, "res/ui/pistol_icon.png", { 0, 0 }, { 0, 0 }, 1, 1, nil, 0);
 	init_spritesheet(&medKitIcon, renderer, "res/ui/med_kit_icon.png", { 0, 0 }, { 0, 0 }, 1, 1, nil, 0);
-	
+	init_spritesheet(&hostageIcon, renderer, "res/ui/hostage_icon.png", { 0, 0 }, { 0, 0 }, 1, 1, nil, 0);
+
 	running = true;
 	state = .Menu;
 	
@@ -67,6 +72,10 @@ reset_game :: proc(using game: ^Game) {
 	clear(&zombies);
 	clear(&hostages);
 	spawn_entities(&tilemap);
+
+	hostagesLeft = u32(len(hostages));
+	hostagesProgressText = create_text(renderer, menu.textFont,
+									   strings.clone_to_cstring(fmt.tprintf("{} / {}", game.hostagesSaved, game.hostagesSaved + game.hostagesLeft)));
 }
 
 run_game :: proc(using game: ^Game) {
@@ -207,6 +216,7 @@ draw_gameplay :: proc(using game: ^Game) {
 	draw_inventory_slots(game);
 	draw_chests_inventory_slots(game, viewOffset);
 	draw_character_health_bar(&player, 0);
+	draw_number_of_hostages_left(game);
 }
 
 draw_paused :: proc(using game: ^Game) {
@@ -249,6 +259,17 @@ draw_inventory_slots :: proc(using game: ^Game) {
 
 		x += inventorySlotBackground.outputSize.x;
 	}
+}
+
+draw_number_of_hostages_left :: proc(using game: ^Game) {
+	// Draws the icon (we can't use draw_spritesheet() here because
+	// we need to specify the size, not just the position.)
+	iconRect := create_sdl_rect({ screenDimensions.x * 1 / 150, screenDimensions.y * 8 / 100 },
+								{ PLAYER_HEALTH_BAR_HEIGHT, PLAYER_HEALTH_BAR_HEIGHT });
+	sdl.RenderCopy(renderer, hostageIcon.texture, nil, &iconRect);
+
+	draw_text(&hostagesProgressText, { (screenDimensions.x * 4 / 100) + (f64(hostagesProgressText.rect.w) / 2),
+									   (screenDimensions.y * 8 / 100) + (f64(hostagesProgressText.rect.h))})
 }
 
 create_window :: proc(game: ^Game) -> (success: bool) {

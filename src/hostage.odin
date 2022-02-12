@@ -1,7 +1,9 @@
 package main;
 
+import "core:fmt"
 import "core:math"
 import "core:math/rand"
+import "core:strings"
 
 import sdl "vendor:sdl2"
 
@@ -85,6 +87,10 @@ update_hostage :: proc(using hostage: ^Hostage, hostageIndex: int, deltaTime: f6
 		game.hostagesSaved += 1;
 		game.hostagesLeft -= 1;
 
+		free_text(&game.hostagesProgressText);
+		game.hostagesProgressText = create_text(game.renderer, game.menu.textFont,
+												strings.clone_to_cstring(fmt.tprintf("{} / {}", game.hostagesSaved, game.hostagesSaved + game.hostagesLeft)));
+		
 		destory_hostage(hostage, hostageIndex);
 		return false;
 	}
