@@ -278,16 +278,17 @@ create_window :: proc(game: ^Game) -> (success: bool) {
 	sdl.GetCurrentDisplayMode(0, &displayMode);
 
 	WINDOW_FLAGS :: sdl.WindowFlags {};
+	windowDimensions: Vector2;
 
 	if sdl.WindowFlag.FULLSCREEN in WINDOW_FLAGS {
-		game.screenDimensions = { f64(displayMode.w), f64(displayMode.h) };
+		windowDimensions = { f64(displayMode.w), f64(displayMode.h) };
 	} else {
 		size := min(displayMode.w / 16, displayMode.h / 9);
 		size -= 10; // Makes the window a bit smaller than the screen size
-		game.screenDimensions = { f64(size * 16), f64(size * 9) };
+		windowDimensions = { f64(size * 16), f64(size * 9) };
 	}
 	
-	game.window = sdl.CreateWindow("Infecdead", 0, 0, i32(game.screenDimensions.x), i32(game.screenDimensions.y), WINDOW_FLAGS);
+	game.window = sdl.CreateWindow("Infecdead", 0, 0, i32(windowDimensions.x), i32(windowDimensions.y), WINDOW_FLAGS);
 	if game.window == nil {
 		printf("Error: Failed to create window. Message: '{}'\n", sdl.GetError());
 		return false;
@@ -299,6 +300,8 @@ create_window :: proc(game: ^Game) -> (success: bool) {
 		return false;
 	}
 
+	game.screenDimensions = { 1920, 1080 };
+	sdl.RenderSetLogicalSize(game.renderer, 1920, 1080);
 	sdl.SetRenderDrawBlendMode(game.renderer, sdl.BlendMode.BLEND);
 	return true;
 }

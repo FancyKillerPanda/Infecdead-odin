@@ -61,8 +61,8 @@ create_menu :: proc(game: ^Game) -> (menu: Menu) {
 	menu.game = game;
 	menu.state = .Home;
 
-	menu.titleFont = ttf.OpenFont("res/fonts/Pixeltype.ttf", 128);
-	menu.textFont = ttf.OpenFont("res/fonts/Pixeltype.ttf", 42);
+	menu.titleFont = ttf.OpenFont("res/fonts/Pixeltype.ttf", 144);
+	menu.textFont = ttf.OpenFont("res/fonts/Pixeltype.ttf", 56);
 	if menu.titleFont == nil || menu.textFont == nil {
 		printf("Error: Failed to load menu font. Reason: {}\n", sdl.GetError());
 		return;
