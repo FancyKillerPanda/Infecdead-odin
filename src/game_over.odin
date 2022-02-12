@@ -32,9 +32,12 @@ create_game_over_screen :: proc(game: ^Game) -> (gameOverScreen: GameOverScreen)
 	gameWonText = create_text(game.renderer, game.menu.titleFont, "What zombie invasion?", { 0, 255, 0, 255 });
 	gameWonExtraText = create_text(game.renderer, game.menu.textFont, GAME_OVER_WON_TEXT);
 	gameOverWonMenu = create_button_group(game.renderer, game.menu.textFont, { "Play Again", "Menu" });
+	set_button_group_colours(&gameOverWonMenu, { 255, 255, 255, 255 }, { 0, 255, 0, 255 }, { 0, 127, 0, 255 });
+	
 	gameLostText = create_text(game.renderer, game.menu.titleFont, "You Lost!", { 255, 0, 0, 255 });
 	gameLostExtraText = create_text(game.renderer, game.menu.textFont, GAME_OVER_LOST_TEXT);
 	gameOverLostMenu = create_button_group(game.renderer, game.menu.textFont, { "Retry", "Menu" });
+	set_button_group_colours(&gameOverLostMenu, { 255, 255, 255, 255 }, { 255, 0, 0, 255 }, { 127, 0, 0, 255 });
 
 	return;
 }
@@ -58,6 +61,7 @@ handle_game_over_events :: proc(using gameOverScreen: ^GameOverScreen, event: ^s
 			result := button_group_handle_mouse_up(menu, event);
 			if result == 0 {
 				reset_game(game);
+				game.state = .Playing;
 			} else if result == 1 {
 				game.state = .Menu;
 			}

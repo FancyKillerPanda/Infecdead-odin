@@ -491,6 +491,18 @@
                  "width":0,
                  "x":416,
                  "y":1504
+                }, 
+                {
+                 "height":0,
+                 "id":60,
+                 "name":"Zombie",
+                 "point":true,
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":0,
+                 "x":624,
+                 "y":976
                 }],
          "opacity":1,
          "type":"objectgroup",
@@ -499,7 +511,7 @@
          "y":0
         }],
  "nextlayerid":11,
- "nextobjectid":60,
+ "nextobjectid":61,
  "orientation":"orthogonal",
  "renderorder":"right-down",
  "tiledversion":"1.7.2",

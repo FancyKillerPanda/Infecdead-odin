@@ -388,8 +388,11 @@ take_damage :: proc(using player: ^Player, damage: f64) {
 	health -= damage;
 
 	if health <= 0 {
-		printf("You died.\n");
 		health = 0;
+
+		game.state = .GameOver;
+		game.gameWon = false;
+
 		return;
 	}
 }

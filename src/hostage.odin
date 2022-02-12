@@ -87,6 +87,11 @@ update_hostage :: proc(using hostage: ^Hostage, hostageIndex: int, deltaTime: f6
 		game.hostagesSaved += 1;
 		game.hostagesLeft -= 1;
 
+		if game.hostagesLeft == 0 {
+			game.state = .GameOver;
+			game.gameWon = true;
+		}
+
 		free_text(&game.hostagesProgressText);
 		game.hostagesProgressText = create_text(game.renderer, game.menu.textFont,
 												strings.clone_to_cstring(fmt.tprintf("{} / {}", game.hostagesSaved, game.hostagesSaved + game.hostagesLeft)));
