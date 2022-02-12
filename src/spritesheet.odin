@@ -23,19 +23,26 @@ Spritesheet :: struct {
 }
 
 // If the animationDelayMs is 0, the animation will not progress automatically
-init_spritesheet :: proc(spritesheet: ^Spritesheet, renderer: ^sdl.Renderer, filepath: cstring,
+init_spritesheet :: proc(spritesheet: ^Spritesheet, renderer: ^sdl.Renderer, data: [] u8,
 						 outputSize: Vector2,
 						 subrectDimensions: Vector2, numberOfSubrects: u32, subrectsPerRow: u32,
 						 animationOrder: [] u32, animationDelayMs: u32) {
 	spritesheet.renderer = renderer;
-	spritesheet.texture = img.LoadTexture(renderer, filepath);
+
+	textureData := sdl.RWFromConstMem(raw_data(data), i32(len(data)));
+	if textureData == nil {
+		printf("Error: Failed to read texture data. Reason: {}\n", sdl.GetError());
+		return;
+	}
+	
+	spritesheet.texture = img.LoadTexture_RW(renderer, textureData, true);
 	if spritesheet.texture == nil {
-		printf("Error: Failed to load spritesheet texture (\"%s\").\n", filepath);
+		printf("Error: Failed to load spritesheet texture.\n");
 		return;
 	}
 
 	if sdl.QueryTexture(spritesheet.texture, nil, nil, &spritesheet.textureRect.w, &spritesheet.textureRect.h) < 0 {
-		printf("Error: spritesheet texture (\"%s\") is invalid.\n", filepath);
+		printf("Error: spritesheet texture is invalid.\n");
 		return;
 	}
 

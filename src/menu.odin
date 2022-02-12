@@ -61,8 +61,16 @@ create_menu :: proc(game: ^Game) -> (menu: Menu) {
 	menu.game = game;
 	menu.state = .Home;
 
-	menu.titleFont = ttf.OpenFont("res/fonts/Pixeltype.ttf", 144);
-	menu.textFont = ttf.OpenFont("res/fonts/Pixeltype.ttf", 56);
+	fontData := sdl.RWFromConstMem(raw_data(FONT_PIXELTYPE_DATA), i32(len(FONT_PIXELTYPE_DATA)));
+	if fontData == nil {
+		printf("Error: Failed to read font data. Reason: {}\n", sdl.GetError());
+		return;
+	}
+	
+	menu.titleFont = ttf.OpenFontRW(fontData, false, 144);
+	sdl.RWseek(fontData, 0, sdl.SEEK_SET);
+	menu.textFont = ttf.OpenFontRW(fontData, true, 56);
+
 	if menu.titleFont == nil || menu.textFont == nil {
 		printf("Error: Failed to load menu font. Reason: {}\n", sdl.GetError());
 		return;

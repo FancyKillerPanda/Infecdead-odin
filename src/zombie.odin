@@ -25,7 +25,7 @@ create_zombie :: proc(game: ^Game, position: Vector2) -> (zombie: Zombie) {
 	zombie.type = .Zombie;
 	
 	zombie.walkSpritesheet = new(Spritesheet);
-	init_spritesheet(zombie.walkSpritesheet, game.renderer, "res/enemies/zombie.png", zombie.dimensions, { 16, 16 }, 64, 8, nil, 0);
+	init_spritesheet(zombie.walkSpritesheet, game.renderer, ZOMBIE_PNG_DATA, zombie.dimensions, { 16, 16 }, 64, 8, nil, 0);
 	zombie.currentSpritesheet = zombie.walkSpritesheet;
 
 	return;

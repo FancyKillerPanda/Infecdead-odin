@@ -7,7 +7,7 @@ if [%~1]==[--release] (
 	mkdir %projectRoot%\bin\release\ >nul 2>nul
 	cd %projectRoot%\bin\release\
 
-	xcopy %projectRoot%\res\ %projectRoot%\bin\release\res\ /s /e /y /q
+	rem xcopy %projectRoot%\res\ %projectRoot%\bin\release\res\ /s /e /y /q
 	xcopy "C:\Program Files\Odin\vendor\sdl2\SDL2.dll" %projectRoot%\bin\release\ /q /y
 	xcopy "C:\Program Files\Odin\vendor\sdl2\image\SDL2_image.dll" %projectRoot%\bin\release\ /q /y
 	xcopy "C:\Program Files\Odin\vendor\sdl2\image\libpng16-16.dll" %projectRoot%\bin\release\ /q /y
@@ -20,7 +20,7 @@ if [%~1]==[--release] (
 	mkdir %projectRoot%\bin\debug\ >nul 2>nul
 	cd %projectRoot%\bin\debug\
 
-	xcopy %projectRoot%\res\ %projectRoot%\bin\debug\res\ /s /e /y /q
+	rem xcopy %projectRoot%\res\ %projectRoot%\bin\debug\res\ /s /e /y /q
 	xcopy "C:\Program Files\Odin\vendor\sdl2\SDL2.dll" %projectRoot%\bin\debug\ /q /y
 	xcopy "C:\Program Files\Odin\vendor\sdl2\image\SDL2_image.dll" %projectRoot%\bin\debug\ /q /y
 	xcopy "C:\Program Files\Odin\vendor\sdl2\image\libpng16-16.dll" %projectRoot%\bin\debug\ /q /y

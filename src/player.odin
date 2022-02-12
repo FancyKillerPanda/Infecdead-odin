@@ -91,9 +91,9 @@ create_player :: proc(game: ^Game) -> (player: Player) {
 	player.type = .Player;
 	
 	player.walkSpritesheet = new(Spritesheet);
-	init_spritesheet(player.walkSpritesheet, game.renderer, "res/player/player.png", player.dimensions, { 16, 16 }, 32, 4, nil, 0);
+	init_spritesheet(player.walkSpritesheet, game.renderer, PLAYER_PNG_DATA, player.dimensions, { 16, 16 }, 32, 4, nil, 0);
 	player.walkWithPistolSpritesheet = new(Spritesheet);
-	init_spritesheet(player.walkWithPistolSpritesheet, game.renderer, "res/player/player_with_pistol.png", player.dimensions, { 16, 16 }, 32, 4, nil, 0);
+	init_spritesheet(player.walkWithPistolSpritesheet, game.renderer, PLAYER_WITH_PISTOL_PNG_DATA, player.dimensions, { 16, 16 }, 32, 4, nil, 0);
 	player.currentSpritesheet = player.walkSpritesheet;
 
 	return;
@@ -445,7 +445,7 @@ create_pistol_bullet :: proc(using player: ^Player) -> (bullet: Bullet) {
 	bullet.velocity.y = -math.sin_f64(rotationRadians) * PISTOL_SHOT_VELOCITY;
 
 	bullet.spritesheet = new(Spritesheet);
-	init_spritesheet(bullet.spritesheet, game.renderer, "res/bullets/pistol_bullet.png", { 0, 0 }, { 0, 0 }, 1, 1, nil, 0);
+	init_spritesheet(bullet.spritesheet, game.renderer, PISTOL_BULLET_PNG_DATA, { 0, 0 }, { 0, 0 }, 1, 1, nil, 0);
 
 	bullet.damage = rand.float64_range(PISTOL_MIN_DAMAGE, PISTOL_MAX_DAMAGE);
 	

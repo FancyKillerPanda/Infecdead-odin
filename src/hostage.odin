@@ -25,7 +25,7 @@ create_hostage :: proc(game: ^Game, position: Vector2) -> (hostage: Hostage) {
 	
 	hostage.walkSpritesheet = new(Spritesheet);
 	// TODO(fkp): A sprite for the hostages
-	init_spritesheet(hostage.walkSpritesheet, game.renderer, "res/player/player.png", hostage.dimensions, { 16, 16 }, 32, 4, nil, 0);
+	init_spritesheet(hostage.walkSpritesheet, game.renderer, PLAYER_PNG_DATA, hostage.dimensions, { 16, 16 }, 32, 4, nil, 0);
 	hostage.currentSpritesheet = hostage.walkSpritesheet;
 
 	return;

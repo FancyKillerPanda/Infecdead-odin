@@ -53,7 +53,7 @@ GameState :: enum {
 init_game :: proc(using game: ^Game) -> bool {
 	create_window(game) or_return;
 	
-	tilemap = parse_tilemap(game, "res/map/outside.json", OUTPUT_TILE_SIZE) or_return;
+	tilemap = parse_tilemap(game, OUTPUT_TILE_SIZE) or_return;
 	game.currentWorldDimensions = tilemap.dimensions * OUTPUT_TILE_SIZE;
 
 	menu = create_menu(game);
@@ -61,11 +61,11 @@ init_game :: proc(using game: ^Game) -> bool {
 	
 	init_chests(game);
 	
-	init_spritesheet(&inventorySlotBackground, renderer, "res/ui/inventory_slot_background.png", { 0, 0 }, { 0, 0 }, 1, 1, nil, 0);
-	init_spritesheet(&inventorySlotBackgroundSelected, renderer, "res/ui/inventory_slot_background_selected.png", { 0, 0 }, { 0, 0 }, 1, 1, nil, 0);
-	init_spritesheet(&pistolIcon, renderer, "res/ui/pistol_icon.png", { 0, 0 }, { 0, 0 }, 1, 1, nil, 0);
-	init_spritesheet(&medKitIcon, renderer, "res/ui/med_kit_icon.png", { 0, 0 }, { 0, 0 }, 1, 1, nil, 0);
-	init_spritesheet(&hostageIcon, renderer, "res/ui/hostage_icon.png", { 0, 0 }, { 0, 0 }, 1, 1, nil, 0);
+	init_spritesheet(&inventorySlotBackground, renderer, INVENTORY_SLOT_BACKGROUND_DATA, { 0, 0 }, { 0, 0 }, 1, 1, nil, 0);
+	init_spritesheet(&inventorySlotBackgroundSelected, renderer, INVENTORY_SLOT_BACKGROUND_SELECTED_DATA, { 0, 0 }, { 0, 0 }, 1, 1, nil, 0);
+	init_spritesheet(&pistolIcon, renderer, PISTOL_ICON_PNG_DATA, { 0, 0 }, { 0, 0 }, 1, 1, nil, 0);
+	init_spritesheet(&medKitIcon, renderer, MED_KIT_ICON_PNG_DATA, { 0, 0 }, { 0, 0 }, 1, 1, nil, 0);
+	init_spritesheet(&hostageIcon, renderer, HOSTAGE_ICON_PNG_DATA, { 0, 0 }, { 0, 0 }, 1, 1, nil, 0);
 
 	running = true;
 	state = .Menu;

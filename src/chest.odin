@@ -12,8 +12,8 @@ chestSpritesheet: Spritesheet;
 chestContentsIconBackground: Spritesheet;
 
 init_chests :: proc(game: ^Game) {
-	init_spritesheet(&chestSpritesheet, game.renderer, "res/objects/chest.png", OUTPUT_TILE_SIZE, { 16, 16 }, 2, 2, nil, 0);
-	init_spritesheet(&chestContentsIconBackground, game.renderer, "res/ui/chest_contents_icon_background.png", { 0, 0 }, { 0, 0 }, 1, 1, nil, 0);
+	init_spritesheet(&chestSpritesheet, game.renderer, CHEST_PNG_DATA, OUTPUT_TILE_SIZE, { 16, 16 }, 2, 2, nil, 0);
+	init_spritesheet(&chestContentsIconBackground, game.renderer, CHEST_CONTENTS_ICON_BACKGROUND_DATA, { 0, 0 }, { 0, 0 }, 1, 1, nil, 0);
 	spawn_chests(&game.tilemap);
 }
 

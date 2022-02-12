@@ -50,17 +50,11 @@ EntityType :: enum {
 	Chest,
 }
 
-parse_tilemap :: proc(game_: ^Game, filepath: string, outputTileSize: Vector2,) -> (tilemap: Tilemap, success: bool) {
+parse_tilemap :: proc(game_: ^Game, outputTileSize: Vector2,) -> (tilemap: Tilemap, success: bool) {
 	using tilemap;
 	game = game_;
 
-	data, readSuccess := os.read_entire_file(filepath);
-	if !readSuccess {
-		printf("Error: Failed to read tilemap file '%s'\n", filepath);
-		return;
-	}
-
-	document, error := json.parse(data, json.DEFAULT_SPECIFICATION, true);
+	document, error := json.parse(MAP_OUTSIDE_DATA, json.DEFAULT_SPECIFICATION, true);
 	if error != .None {
 		printf("Error: Failed to parse tilemap JSON. Reason: {}\n", error);
 		return;
@@ -77,8 +71,7 @@ parse_tilemap :: proc(game_: ^Game, filepath: string, outputTileSize: Vector2,) 
 	dimensions.x = f64(mainObject["width"].(json.Integer));
 	dimensions.y = f64(mainObject["height"].(json.Integer));
 
-	tilesetFilepath := core_filepath.join(core_filepath.dir(filepath), mainObject["tilesets"].(json.Array)[0].(json.Object)["source"].(json.String));
-	tileset = parse_tileset(game, tilesetFilepath) or_return;
+	tileset = parse_tileset(game, MAP_TILESET_DATA, MAP_TILESET_IMAGE_DATA) or_return;
 
 	clear(&renderDataFirstPass);
 	clear(&renderDataSecondPass);
@@ -208,14 +201,8 @@ add_spawn_points :: proc(using tilemap: ^Tilemap, layer: json.Object) {
 	}
 }
 
-parse_tileset :: proc(game_: ^Game, filepath: string) -> (tileset: Tileset, success: bool) {
+parse_tileset :: proc(game_: ^Game, data: [] u8, imageData: [] u8) -> (tileset: Tileset, success: bool) {
 	using tileset;
-
-	data, readSuccess := os.read_entire_file(filepath);
-	if !readSuccess {
-		printf("Error: Failed to read tileset file '%s'\n", filepath);
-		return;
-	}
 
 	document, error := json.parse(data, json.DEFAULT_SPECIFICATION, true);
 	if error != .None {
@@ -237,8 +224,13 @@ parse_tileset :: proc(game_: ^Game, filepath: string) -> (tileset: Tileset, succ
 	tileDimensions.y = f64(mainObject["tileheight"].(json.Integer));
 	tilesPerRow = u32(mainObject["columns"].(json.Integer));
 
-	imageFilepath := core_filepath.join(core_filepath.dir(filepath), mainObject["image"].(json.String));
-	texture = img.LoadTexture(game.renderer, strings.clone_to_cstring(imageFilepath, context.temp_allocator));
+	imageDataMemory := sdl.RWFromConstMem(raw_data(imageData), i32(len(imageData)));
+	if imageDataMemory == nil {
+		printf("Error: Failed to read tileset image data. Reason: {}\n", sdl.GetError());
+		return;
+	}
+	
+	texture = img.LoadTexture_RW(game.renderer, imageDataMemory, true);
 	if texture == nil {
 		printf("Error: Failed to load tileset image. Reason: '%s'\n", sdl.GetError());
 		return;
@@ -250,8 +242,6 @@ parse_tileset :: proc(game_: ^Game, filepath: string) -> (tileset: Tileset, succ
 		return;
 	}
 
-	// assert(i32(dimensions.x) == width && i32(dimensions.y) == height, "Tileset image dimensions do not match.");
-	
 	success = true;
 	return;
 }
