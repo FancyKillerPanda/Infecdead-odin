@@ -185,7 +185,7 @@ add_spawn_points :: proc(using tilemap: ^Tilemap, layer: json.Object) {
 
 	for value in objectValues {
 		location: Vector2 = { f64(value.(json.Object)["x"].(json.Integer)), f64(value.(json.Object)["y"].(json.Integer)) };
-		worldPosition := (location * OUTPUT_TILE_SIZE) / tileset.tileDimensions;
+		worldPosition := ((location * OUTPUT_TILE_SIZE) / tileset.tileDimensions) + (OUTPUT_TILE_SIZE / 2);
 		entityType: EntityType;
 		properties: map[string] string;
 		

@@ -205,6 +205,7 @@ draw_gameplay :: proc(using game: ^Game) {
 
 	draw_minimap(&tilemap);
 	draw_inventory_slots(game);
+	draw_chests_inventory_slots(game, viewOffset);
 	draw_character_health_bar(&player, 0);
 }
 

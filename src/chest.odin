@@ -40,9 +40,14 @@ update_chests :: proc(using game: ^Game) {
 
 draw_chests :: proc(game: ^Game, viewOffset: Vector2) {
 	for chest in &game.chests {
-		if chest.isOpen {
-			spritesheet_set_frame(&chestSpritesheet, 1);
+		spritesheet_set_frame(&chestSpritesheet, u32(chest.isOpen));
+		draw_spritesheet(&chestSpritesheet, chest.worldPosition - viewOffset);
+	}
+}
 
+draw_chests_inventory_slots :: proc(game: ^Game, viewOffset: Vector2) {
+	for chest in &game.chests {
+		if chest.isOpen {
 			iconPosition := chest.worldPosition - viewOffset;
 			iconPosition.y -= chestContentsIconBackground.outputSize.y * 2 / 3; // For some spacing
 
@@ -62,10 +67,6 @@ draw_chests :: proc(game: ^Game, viewOffset: Vector2) {
 			if chest.contents.currentText.message != "" {
 				draw_text(&chest.contents.currentText, { iconPosition.x, iconPosition.y + f64(chest.contents.currentText.rect.h)});
 			}
-		} else {
-			spritesheet_set_frame(&chestSpritesheet, 0);
 		}
-
-		draw_spritesheet(&chestSpritesheet, chest.worldPosition - viewOffset);
 	}
 }

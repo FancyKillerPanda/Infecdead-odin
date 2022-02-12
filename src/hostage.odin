@@ -7,7 +7,8 @@ import sdl "vendor:sdl2"
 
 HOSTAGE_WALK_ACC :: 650;
 HOSTAGE_FRICTION :: 0.9;
-HOSTAGE_FOLLOW_DISTANCE :: 300;
+HOSTAGE_FOLLOW_MIN_DISTANCE :: 50;
+HOSTAGE_FOLLOW_MAX_DISTANCE :: 300;
 HOSTAGE_SCARE_DISTANCE :: 300;
 
 HOSTAGE_HEALTH_BAR_HEIGHT :: ZOMBIE_HEALTH_BAR_HEIGHT;
@@ -36,17 +37,18 @@ destory_hostage :: proc(using hostage: ^Hostage, hostageIndex: int) {
 update_hostage :: proc(using hostage: ^Hostage, hostageIndex: int, deltaTime: f64) -> bool{
 	// Rotation tracks the player, but stays away from zombies
 	deltaToPlayer := game.player.worldPosition - worldPosition;
-	if vec2_length(deltaToPlayer) > HOSTAGE_FOLLOW_DISTANCE {
-		deltaToPlayer = 0;
-	}
-	
+	distanceToPlayer := vec2_length(deltaToPlayer);
 	totalDelta := deltaToPlayer;
 
+	if distanceToPlayer > HOSTAGE_FOLLOW_MAX_DISTANCE {
+		totalDelta = 0;
+	}
+	
 	for hostage in game.hostages {
 		deltaToHostage := hostage.worldPosition - worldPosition;
 		distance := vec2_length(deltaToHostage);
 
-		if distance != 0 && distance <= HOSTAGE_FOLLOW_DISTANCE {
+		if distance != 0 && distance >= HOSTAGE_FOLLOW_MIN_DISTANCE && distance <= HOSTAGE_FOLLOW_MAX_DISTANCE {
 			totalDelta -= vec2_normalise(deltaToHostage) * 20;
 		}
 	}
@@ -63,11 +65,12 @@ update_hostage :: proc(using hostage: ^Hostage, hostageIndex: int, deltaTime: f6
 	rotationVector := vec2_normalise({ math.cos_f64(rotationRadians), -math.sin_f64(rotationRadians) });
 	
 	// Movement
-	if totalDelta == 0 {
+	if distanceToPlayer < HOSTAGE_FOLLOW_MIN_DISTANCE || distanceToPlayer > HOSTAGE_FOLLOW_MAX_DISTANCE {
 		acceleration = 0;
 	} else {
 		acceleration = rotationVector * HOSTAGE_WALK_ACC;
 	}
+
 	velocity += acceleration * deltaTime;
 	velocity *= HOSTAGE_FRICTION;
 
