@@ -59,7 +59,6 @@ init_game :: proc(using game: ^Game) -> bool {
 	menu = create_menu(game);
 	gameOverScreen = create_game_over_screen(game);
 	
-	player = create_player(game);
 	init_chests(game);
 	
 	init_spritesheet(&inventorySlotBackground, renderer, "res/ui/inventory_slot_background.png", { 0, 0 }, { 0, 0 }, 1, 1, nil, 0);
@@ -75,10 +74,11 @@ init_game :: proc(using game: ^Game) -> bool {
 }
 
 reset_game :: proc(using game: ^Game) {
-	clear(&zombies);
-	clear(&hostages);
+	player = create_player(game);
 	spawn_entities(&tilemap);
+	spawn_chests(&tilemap);
 
+	
 	hostagesSaved = 0;
 	hostagesLeft = u32(len(hostages));
 	hostagesProgressText = create_text(renderer, menu.textFont,

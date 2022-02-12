@@ -346,6 +346,9 @@ advance_position :: proc(currentRow: ^i32, currentColumn: ^i32, tilemap: ^Tilema
 // This function will spawn zombies and other characters, but only set the location
 // of the player (it assumes the player has already been initialised).
 spawn_entities :: proc(using tilemap: ^Tilemap) {
+	clear(&game.zombies);
+	clear(&game.hostages);
+	
 	for spawnPoint in spawnPoints {
 		switch spawnPoint.entityType {
 			case .Chest:
@@ -364,6 +367,8 @@ spawn_entities :: proc(using tilemap: ^Tilemap) {
 }
 
 spawn_chests :: proc(using tilemap: ^Tilemap) {
+	clear(&game.chests);
+	
 	for spawnPoint in spawnPoints {
 		#partial switch spawnPoint.entityType {
 			case .Chest:
