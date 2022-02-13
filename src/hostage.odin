@@ -15,6 +15,8 @@ HOSTAGE_SCARE_DISTANCE :: 300;
 
 HOSTAGE_HEALTH_BAR_HEIGHT :: ZOMBIE_HEALTH_BAR_HEIGHT;
 
+HOSTAGE_TEXTURES: [3] [] u8 = { HOSTAGE_RED_PNG_DATA, HOSTAGE_PURPLE_PNG_DATA, HOSTAGE_YELLOW_PNG_DATA };
+
 Hostage :: struct {
 	using character: Character,
 }
@@ -23,9 +25,10 @@ create_hostage :: proc(game: ^Game, position: Vector2) -> (hostage: Hostage) {
 	init_character(game, &hostage, position);
 	hostage.type = .Hostage;
 	
+	hostageTextureIndex := rand.uint32() % 3;
+	
 	hostage.walkSpritesheet = new(Spritesheet);
-	// TODO(fkp): A sprite for the hostages
-	init_spritesheet(hostage.walkSpritesheet, game.renderer, PLAYER_PNG_DATA, hostage.dimensions, { 16, 16 }, 32, 4, nil, 0);
+	init_spritesheet(hostage.walkSpritesheet, game.renderer, HOSTAGE_TEXTURES[hostageTextureIndex], hostage.dimensions, { 16, 16 }, 32, 4, nil, 0);
 	hostage.currentSpritesheet = hostage.walkSpritesheet;
 
 	return;

@@ -3,6 +3,9 @@ package main;
 ZOMBIE_PNG_DATA :: #load("../res/characters/zombie.png");
 PLAYER_PNG_DATA :: #load("../res/characters/player.png");
 PLAYER_WITH_PISTOL_PNG_DATA :: #load("../res/characters/player_with_pistol.png");
+HOSTAGE_RED_PNG_DATA :: #load("../res/characters/hostage_red.png");
+HOSTAGE_PURPLE_PNG_DATA :: #load("../res/characters/hostage_purple.png");
+HOSTAGE_YELLOW_PNG_DATA :: #load("../res/characters/hostage_yellow.png");
 
 FONT_PIXELTYPE_DATA :: #load("../res/fonts/Pixeltype.ttf");
 
