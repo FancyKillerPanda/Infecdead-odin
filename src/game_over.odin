@@ -69,9 +69,9 @@ handle_game_over_events :: proc(using gameOverScreen: ^GameOverScreen, event: ^s
 }
 
 draw_game_over :: proc(using gameOverScreen: ^GameOverScreen) {
-	draw_tilemap_first_pass(&game.tilemap, game.viewOffset);
+	draw_tilemap_first_pass(&game.tilemap, OUTPUT_TILE_SIZE, game.viewOffset);
 	draw_chests(game, game.viewOffset);
-	draw_tilemap_second_pass(&game.tilemap, game.viewOffset);
+	draw_tilemap_second_pass(&game.tilemap, OUTPUT_TILE_SIZE, game.viewOffset);
 
 	draw_dark_overlay(game);
 	

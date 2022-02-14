@@ -28,7 +28,7 @@ update_chests :: proc(using game: ^Game) {
 	playerWorldPositionRect.h += 20;
 	
 	for chest in &chests {
-		chestRect := create_sdl_rect(chest.worldPosition, OUTPUT_TILE_SIZE);
+		chestRect := create_sdl_rect(chest.worldPosition, TILEMAP_TILE_SIZE);
 
 		if sdl.HasIntersection(&playerWorldPositionRect, &chestRect) {
 			chest.isOpen = true;
@@ -39,9 +39,11 @@ update_chests :: proc(using game: ^Game) {
 }
 
 draw_chests :: proc(game: ^Game, viewOffset: Vector2) {
+	scale := OUTPUT_TILE_SIZE / TILEMAP_TILE_SIZE;
+	
 	for chest in &game.chests {
 		spritesheet_set_frame(&chestSpritesheet, u32(chest.isOpen));
-		draw_spritesheet(&chestSpritesheet, chest.worldPosition - viewOffset);
+		draw_spritesheet(&chestSpritesheet, (chest.worldPosition - viewOffset) * scale);
 	}
 }
 

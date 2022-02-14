@@ -7,11 +7,11 @@ import "core:strings"
 
 import sdl "vendor:sdl2"
 
-HOSTAGE_WALK_ACC :: 650;
+HOSTAGE_WALK_ACC :: 325;
 HOSTAGE_FRICTION :: 0.9;
-HOSTAGE_FOLLOW_MIN_DISTANCE :: 50;
-HOSTAGE_FOLLOW_MAX_DISTANCE :: 300;
-HOSTAGE_SCARE_DISTANCE :: 300;
+HOSTAGE_FOLLOW_MIN_DISTANCE :: 25;
+HOSTAGE_FOLLOW_MAX_DISTANCE :: 150;
+HOSTAGE_SCARE_DISTANCE :: 150;
 
 HOSTAGE_HEALTH_BAR_HEIGHT :: ZOMBIE_HEALTH_BAR_HEIGHT;
 
@@ -39,7 +39,7 @@ destory_hostage :: proc(using hostage: ^Hostage, hostageIndex: int) {
 	ordered_remove(&game.hostages, hostageIndex);
 }
 
-update_hostage :: proc(using hostage: ^Hostage, hostageIndex: int, deltaTime: f64) -> bool{
+update_hostage :: proc(using hostage: ^Hostage, hostageIndex: int, deltaTime: f64) -> bool {
 	// Rotation tracks the player, but stays away from zombies
 	deltaToPlayer := game.player.worldPosition - worldPosition;
 	distanceToPlayer := vec2_length(deltaToPlayer);
@@ -79,8 +79,8 @@ update_hostage :: proc(using hostage: ^Hostage, hostageIndex: int, deltaTime: f6
 	velocity += acceleration * deltaTime;
 	velocity *= HOSTAGE_FRICTION;
 
-	if abs(velocity.x) < 5.0 do velocity.x = 0;
-	if abs(velocity.y) < 5.0 do velocity.y = 0;
+	if abs(velocity.x) < 2.5 do velocity.x = 0;
+	if abs(velocity.y) < 2.5 do velocity.y = 0;
 	
 	// Updates position and does collision checking
 	update_character_position(hostage, deltaTime);
@@ -110,6 +110,8 @@ update_hostage :: proc(using hostage: ^Hostage, hostageIndex: int, deltaTime: f6
 }
 
 draw_hostage :: proc(using hostage: ^Hostage, viewOffset: Vector2) {
-	draw_spritesheet(currentSpritesheet, worldPosition - viewOffset);
+	scale := OUTPUT_TILE_SIZE / TILEMAP_TILE_SIZE;
+
+	draw_spritesheet(currentSpritesheet, (worldPosition - viewOffset) * scale);
 	draw_character_health_bar(hostage, viewOffset);
 }

@@ -53,8 +53,8 @@ GameState :: enum {
 init_game :: proc(using game: ^Game) -> bool {
 	create_window(game) or_return;
 	
-	tilemap = parse_tilemap(game, OUTPUT_TILE_SIZE) or_return;
-	game.currentWorldDimensions = tilemap.dimensions * OUTPUT_TILE_SIZE;
+	tilemap = parse_tilemap(game) or_return;
+	game.currentWorldDimensions = tilemap.numberOfTiles;
 
 	menu = create_menu(game);
 	gameOverScreen = create_game_over_screen(game);
@@ -177,17 +177,18 @@ update_game :: proc(using game: ^Game, deltaTime: f64) {
 		update_chests(game);
 		
 		// The view offset (basically a camera) tracks the player
-		viewOffset = player.worldPosition - (game.screenDimensions / 2.0);
+		tilesOnScreen := (game.screenDimensions / OUTPUT_TILE_SIZE) * TILEMAP_TILE_SIZE;
+		viewOffset = player.worldPosition - (tilesOnScreen / 2.0);
 
 		if viewOffset.x < 0.0 do viewOffset.x = 0.0;
 		if viewOffset.y < 0.0 do viewOffset.y = 0.0;
 
-		if viewOffset.x + game.screenDimensions.x > currentWorldDimensions.x {
-			viewOffset.x = currentWorldDimensions.x - game.screenDimensions.x;
+		if viewOffset.x + tilesOnScreen.x > currentWorldDimensions.x * TILEMAP_TILE_SIZE.x {
+			viewOffset.x = (currentWorldDimensions.x * TILEMAP_TILE_SIZE.x) - tilesOnScreen.x;
 		}
 
-		if viewOffset.y + game.screenDimensions.y > currentWorldDimensions.y {
-			viewOffset.y = currentWorldDimensions.y - game.screenDimensions.y;
+		if viewOffset.y + tilesOnScreen.y > currentWorldDimensions.y * TILEMAP_TILE_SIZE.y {
+			viewOffset.y = (currentWorldDimensions.y * TILEMAP_TILE_SIZE.y) - tilesOnScreen.y;
 		}
 	}
 }
@@ -214,7 +215,7 @@ draw_game :: proc(using game: ^Game) {
 }
 
 draw_gameplay :: proc(using game: ^Game) {
-	draw_tilemap_first_pass(&tilemap, viewOffset);
+	draw_tilemap_first_pass(&tilemap, OUTPUT_TILE_SIZE, viewOffset);
 	draw_chests(game, viewOffset);
 	draw_player(&player, viewOffset);
 	
@@ -226,7 +227,7 @@ draw_gameplay :: proc(using game: ^Game) {
 		draw_hostage(&hostage, viewOffset);
 	}
 	
-	draw_tilemap_second_pass(&tilemap, viewOffset);
+	draw_tilemap_second_pass(&tilemap, OUTPUT_TILE_SIZE, viewOffset);
 
 	draw_minimap(&tilemap);
 	draw_inventory_slots(game);

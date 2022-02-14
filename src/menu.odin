@@ -160,9 +160,9 @@ handle_menu_events :: proc(using menu: ^Menu, event: ^sdl.Event) {
 
 draw_menu :: proc(using menu: ^Menu) {
 	viewOffset := Vector2 { game.currentWorldDimensions.x / 5, game.currentWorldDimensions.y * 5 / 12 };
-	draw_tilemap_first_pass(&game.tilemap, viewOffset);
+	draw_tilemap_first_pass(&game.tilemap, OUTPUT_TILE_SIZE, viewOffset);
 	draw_chests(game, viewOffset);
-	draw_tilemap_second_pass(&game.tilemap, viewOffset);
+	draw_tilemap_second_pass(&game.tilemap, OUTPUT_TILE_SIZE, viewOffset);
 
 	draw_dark_overlay(game);
 

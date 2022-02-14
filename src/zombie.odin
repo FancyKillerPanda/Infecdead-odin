@@ -5,9 +5,9 @@ import "core:math/rand"
 
 import sdl "vendor:sdl2"
 
-ZOMBIE_WALK_ACC :: 300;
+ZOMBIE_WALK_ACC :: 150;
 ZOMBIE_FRICTION :: 0.9;
-ZOMBIE_AGGRO_DISTANCE :: 500;
+ZOMBIE_AGGRO_DISTANCE :: 250;
 
 ZOMBIE_MIN_DAMAGE :: 0.1;
 ZOMBIE_MAX_DAMAGE :: 0.2;
@@ -52,7 +52,7 @@ update_zombie :: proc(using zombie: ^Zombie, deltaTime: f64) {
 
 	rotationRadians := math.atan2_f64(-totalDelta.y, totalDelta.x);
 	rotation = math.mod_f64(3600.0 + math.to_degrees_f64(rotationRadians), 360.0);
-	rotationVector: Vector2 = { math.cos_f64(rotationRadians), -math.sin_f64(rotationRadians) };
+	rotationVector: Vector2 = vec2_normalise({ math.cos_f64(rotationRadians), -math.sin_f64(rotationRadians) });
 	
 	// Movement
 	if vec2_length(deltaToPlayer) <= ZOMBIE_AGGRO_DISTANCE {
@@ -64,8 +64,8 @@ update_zombie :: proc(using zombie: ^Zombie, deltaTime: f64) {
 	velocity += acceleration * deltaTime;
 	velocity *= ZOMBIE_FRICTION;
 
-	if abs(velocity.x) < 5.0 do velocity.x = 0;
-	if abs(velocity.y) < 5.0 do velocity.y = 0;
+	if abs(velocity.x) < 2.5 do velocity.x = 0;
+	if abs(velocity.y) < 2.5 do velocity.y = 0;
 	
 	// Updates position and does collision checking
 	update_character_position(zombie, deltaTime);
@@ -85,7 +85,9 @@ update_zombie :: proc(using zombie: ^Zombie, deltaTime: f64) {
 }
 
 draw_zombie :: proc(using zombie: ^Zombie, viewOffset: Vector2) {
-	draw_spritesheet(currentSpritesheet, worldPosition - viewOffset);
+	scale := OUTPUT_TILE_SIZE / TILEMAP_TILE_SIZE;
+
+	draw_spritesheet(currentSpritesheet, (worldPosition - viewOffset) * scale);
 	draw_character_health_bar(zombie, viewOffset);
 }
 
