@@ -50,7 +50,7 @@ draw_chests :: proc(game: ^Game, viewOffset: Vector2) {
 draw_chests_inventory_slots :: proc(game: ^Game, viewOffset: Vector2) {
 	for chest in &game.chests {
 		if chest.isOpen {
-			iconPosition := chest.worldPosition - viewOffset;
+			iconPosition := ((chest.worldPosition - viewOffset) / TILEMAP_TILE_SIZE) * OUTPUT_TILE_SIZE;
 			iconPosition.y -= chestContentsIconBackground.outputSize.y * 2 / 3; // For some spacing
 
 			draw_spritesheet(&chestContentsIconBackground, iconPosition);
