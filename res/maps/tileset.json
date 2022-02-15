@@ -1,5 +1,5 @@
 { "columns":10,
- "image":"..\/map\/tileset.png",
+ "image":"tileset.png",
  "imageheight":320,
  "imagewidth":160,
  "margin":0,

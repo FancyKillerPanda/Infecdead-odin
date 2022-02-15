@@ -7,7 +7,7 @@ import "core:time"
 import sdl "vendor:sdl2"
 
 OUTSIDE_OUTPUT_TILE_SIZE: Vector2 : { 32, 32 };
-TOWN_HALL_OUTPUT_TILE_SIZE: Vector2 : { 32, 32 };
+TOWN_HALL_OUTPUT_TILE_SIZE: Vector2 : { 64, 64 };
 MINIMAP_TILE_SIZE: Vector2 : { 2, 2 };
 
 Game :: struct {
@@ -233,7 +233,10 @@ draw_gameplay :: proc(using game: ^Game) {
 	
 	draw_tilemap_second_pass(currentTilemap, viewOffset);
 
-	draw_minimap(currentTilemap);
+	if currentTilemap == outsideTilemap {
+		draw_minimap(currentTilemap);
+	}
+
 	draw_inventory_slots(game);
 	draw_chests_inventory_slots(game, viewOffset);
 	draw_character_health_bar(&player, 0);
