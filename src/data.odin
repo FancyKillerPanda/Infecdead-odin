@@ -55,20 +55,27 @@ GameData :: struct {
 }
 
 get_game_data :: proc(game: ^Game) -> GameData {
-	return {
-		characterDimensions = { 64, 64 },
+	characterDimensions: Vector2 = { 64, 64 };
+	if game.currentTilemap == game.townHallTilemap {
+		characterDimensions = { 96, 96 };
+	}
 
-		playerWalkAcceleration = 32,
+	movementScale := OUTSIDE_OUTPUT_TILE_SIZE.x / game.currentOutputTileSize.x;
+	
+	return {
+		characterDimensions = characterDimensions,
+
+		playerWalkAcceleration = 32 * movementScale,
 		playerFriction = 0.9,
 		playerRotationSpeed = 7,
 
-		hostageWalkAcceleration = 20,
+		hostageWalkAcceleration = 20 * movementScale,
 		hostageFriction = 0.9,
 		hostageFollowMinDistance = 1.5,
 		hostageFollowMaxDistance = 10,
 		hostageScareDistance = 10,
 
-		zombieWalkAcceleration = 9.4,
+		zombieWalkAcceleration = 9.4 * movementScale,
 		zombieFriction = 0.9,
 		zombieAggroDistance = 15.6,
 		zombieMinDamage = 0.1,
@@ -78,40 +85,10 @@ get_game_data :: proc(game: ^Game) -> GameData {
 		medKitHealthBoost = 0.3,
 
 		pistolShotCooldown = 0.4,
-		pistolShotVelocity = 25,
+		pistolShotVelocity = 25 * movementScale,
 		pistolShotLifetime = 1.0,
 		pistolMinDamage = 0.2,
 		pistolMaxDamage = 0.4,
-		pistolKnockback = 0.16,
+		pistolKnockback = 0.16 * movementScale,
 	};
 }
-
-/*
-CHARACTER_DIMENSIONS: Vector2 : { 64, 64 };
-
-PLAYER_WALK_ACC :: 32;
-PLAYER_FRICTION :: 0.9;
-PLAYER_ROTATION_SPEED :: 7;
-
-HOSTAGE_WALK_ACC :: 20;
-HOSTAGE_FRICTION :: 0.9;
-HOSTAGE_FOLLOW_MIN_DISTANCE :: 1.5;
-HOSTAGE_FOLLOW_MAX_DISTANCE :: 10;
-HOSTAGE_SCARE_DISTANCE :: 10;
-
-ZOMBIE_WALK_ACC :: 9.4;
-ZOMBIE_FRICTION :: 0.9;
-ZOMBIE_AGGRO_DISTANCE :: 15.6;
-ZOMBIE_MIN_DAMAGE :: 0.1;
-ZOMBIE_MAX_DAMAGE :: 0.2;
-ZOMBIE_DAMAGE_COOLDOWN :: 0.5;
-
-MED_KIT_HEALTH_BOOST :: 0.3;
-
-PISTOL_SHOT_COOLDOWN :: 0.4;
-PISTOL_SHOT_VELOCITY :: 25;
-PISTOL_SHOT_LIFETIME :: 1.0;
-PISTOL_MIN_DAMAGE :: 0.2;
-PISTOL_MAX_DAMAGE :: 0.4;
-PISTOL_KNOCKBACK :: 0.16;
-*/
