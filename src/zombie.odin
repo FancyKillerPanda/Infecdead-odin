@@ -5,14 +5,6 @@ import "core:math/rand"
 
 import sdl "vendor:sdl2"
 
-ZOMBIE_WALK_ACC :: 9.4;
-ZOMBIE_FRICTION :: 0.9;
-ZOMBIE_AGGRO_DISTANCE :: 15.6;
-
-ZOMBIE_MIN_DAMAGE :: 0.1;
-ZOMBIE_MAX_DAMAGE :: 0.2;
-ZOMBIE_DAMAGE_COOLDOWN :: 0.5;
-
 ZOMBIE_HEALTH_BAR_HEIGHT :: 10;
 
 Zombie :: struct {
@@ -45,7 +37,7 @@ update_zombie :: proc(using zombie: ^Zombie, deltaTime: f64) {
 		deltaToZombie := zombie.worldPosition - worldPosition;
 		distance := vec2_length(deltaToZombie);
 
-		if distance != 0 && distance <= HOSTAGE_SCARE_DISTANCE {
+		if distance != 0 && distance <= get_game_data(game).hostageScareDistance {
 			totalDelta -= vec2_normalise(deltaToZombie) * 20;
 		}
 	}
@@ -55,14 +47,14 @@ update_zombie :: proc(using zombie: ^Zombie, deltaTime: f64) {
 	rotationVector: Vector2 = vec2_normalise({ math.cos_f64(rotationRadians), -math.sin_f64(rotationRadians) });
 	
 	// Movement
-	if vec2_length(deltaToPlayer) <= ZOMBIE_AGGRO_DISTANCE {
-		acceleration = rotationVector * ZOMBIE_WALK_ACC;
+	if vec2_length(deltaToPlayer) <= get_game_data(game).zombieAggroDistance {
+		acceleration = rotationVector * get_game_data(game).zombieWalkAcceleration;
 	} else {
 		acceleration = 0;
 	}
 
 	velocity += acceleration * deltaTime;
-	velocity *= ZOMBIE_FRICTION;
+	velocity *= get_game_data(game).zombieFriction;
 
 	if abs(velocity.x) < 0.15 do velocity.x = 0;
 	if abs(velocity.y) < 0.15 do velocity.y = 0;
@@ -75,9 +67,9 @@ update_zombie :: proc(using zombie: ^Zombie, deltaTime: f64) {
 	worldPositionRect := multiply_sdl_rect(get_character_world_rect(zombie), game.currentOutputTileSize);
 	playerRect := multiply_sdl_rect(get_character_world_rect(&game.player), game.currentOutputTileSize);
 
-	if timeSinceLastDamageDealt >= ZOMBIE_DAMAGE_COOLDOWN && sdl.HasIntersection(&worldPositionRect, &playerRect) {
+	if timeSinceLastDamageDealt >= get_game_data(game).zombieDamageCooldown && sdl.HasIntersection(&worldPositionRect, &playerRect) {
 		timeSinceLastDamageDealt = 0;
-		take_damage(&game.player, rand.float64_range(ZOMBIE_MIN_DAMAGE, ZOMBIE_MAX_DAMAGE));
+		take_damage(&game.player, rand.float64_range(get_game_data(game).zombieMinDamage, get_game_data(game).zombieMaxDamage));
 	}
 
 	// Texturing

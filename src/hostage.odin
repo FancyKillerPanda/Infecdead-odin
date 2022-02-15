@@ -7,14 +7,7 @@ import "core:strings"
 
 import sdl "vendor:sdl2"
 
-HOSTAGE_WALK_ACC :: 20;
-HOSTAGE_FRICTION :: 0.9;
-HOSTAGE_FOLLOW_MIN_DISTANCE :: 1.5;
-HOSTAGE_FOLLOW_MAX_DISTANCE :: 10;
-HOSTAGE_SCARE_DISTANCE :: 10;
-
 HOSTAGE_HEALTH_BAR_HEIGHT :: ZOMBIE_HEALTH_BAR_HEIGHT;
-
 HOSTAGE_TEXTURES: [3] [] u8 = { HOSTAGE_RED_PNG_DATA, HOSTAGE_PURPLE_PNG_DATA, HOSTAGE_YELLOW_PNG_DATA };
 
 Hostage :: struct {
@@ -45,7 +38,7 @@ update_hostage :: proc(using hostage: ^Hostage, hostageIndex: int, deltaTime: f6
 	distanceToPlayer := vec2_length(deltaToPlayer);
 	totalDelta := deltaToPlayer;
 
-	if distanceToPlayer > HOSTAGE_FOLLOW_MAX_DISTANCE {
+	if distanceToPlayer > get_game_data(game).hostageFollowMaxDistance {
 		totalDelta = 0;
 	}
 	
@@ -53,14 +46,14 @@ update_hostage :: proc(using hostage: ^Hostage, hostageIndex: int, deltaTime: f6
 		deltaToHostage := hostage.worldPosition - worldPosition;
 		distance := vec2_length(deltaToHostage);
 
-		if distance != 0 && distance >= HOSTAGE_FOLLOW_MIN_DISTANCE && distance <= HOSTAGE_FOLLOW_MAX_DISTANCE {
+		if distance != 0 && distance >= get_game_data(game).hostageFollowMinDistance && distance <= get_game_data(game).hostageFollowMaxDistance {
 			totalDelta -= vec2_normalise(deltaToHostage) * 20;
 		}
 	}
 	
 	for zombie in game.zombies {
 		deltaToZombie := zombie.worldPosition - worldPosition;
-		if vec2_length(deltaToZombie) <= HOSTAGE_SCARE_DISTANCE {
+		if vec2_length(deltaToZombie) <= get_game_data(game).hostageScareDistance {
 			totalDelta -= vec2_normalise(deltaToZombie) * 25;
 		}
 	}
@@ -70,14 +63,14 @@ update_hostage :: proc(using hostage: ^Hostage, hostageIndex: int, deltaTime: f6
 	rotationVector := vec2_normalise({ math.cos_f64(rotationRadians), -math.sin_f64(rotationRadians) });
 	
 	// Movement
-	if distanceToPlayer < HOSTAGE_FOLLOW_MIN_DISTANCE || distanceToPlayer > HOSTAGE_FOLLOW_MAX_DISTANCE {
+	if distanceToPlayer < get_game_data(game).hostageFollowMinDistance || distanceToPlayer > get_game_data(game).hostageFollowMaxDistance {
 		acceleration = 0;
 	} else {
-		acceleration = rotationVector * HOSTAGE_WALK_ACC;
+		acceleration = rotationVector * get_game_data(game).hostageWalkAcceleration;
 	}
 
 	velocity += acceleration * deltaTime;
-	velocity *= HOSTAGE_FRICTION;
+	velocity *= get_game_data(game).hostageFriction;
 
 	if abs(velocity.x) < 0.15 do velocity.x = 0;
 	if abs(velocity.y) < 0.15 do velocity.y = 0;

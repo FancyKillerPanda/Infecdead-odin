@@ -7,23 +7,8 @@ import "core:strings"
 
 import sdl "vendor:sdl2"
 
-CHARACTER_DIMENSIONS: Vector2 : { 64, 64 };
-
-PLAYER_WALK_ACC :: 32;
-PLAYER_FRICTION :: 0.9;
-PLAYER_ROTATION_SPEED :: 7;
-
 PLAYER_HEALTH_BAR_WIDTH :: 400;
 PLAYER_HEALTH_BAR_HEIGHT :: 40;
-
-MED_KIT_HEALTH_BOOST :: 0.3;
-
-PISTOL_SHOT_COOLDOWN :: 0.4;
-PISTOL_SHOT_VELOCITY :: 25;
-PISTOL_SHOT_LIFETIME :: 1.0;
-PISTOL_MIN_DAMAGE :: 0.2;
-PISTOL_MAX_DAMAGE :: 0.4;
-PISTOL_KNOCKBACK :: 0.16;
 
 Character :: struct {
 	game: ^Game,
@@ -93,9 +78,9 @@ create_player :: proc(game: ^Game) -> (player: Player) {
 	player.type = .Player;
 	
 	player.walkSpritesheet = new(Spritesheet);
-	init_spritesheet(player.walkSpritesheet, game.renderer, PLAYER_PNG_DATA, CHARACTER_DIMENSIONS, { 16, 16 }, 32, 4, nil, 0);
+	init_spritesheet(player.walkSpritesheet, game.renderer, PLAYER_PNG_DATA, get_game_data(game).characterDimensions, { 16, 16 }, 32, 4, nil, 0);
 	player.walkWithPistolSpritesheet = new(Spritesheet);
-	init_spritesheet(player.walkWithPistolSpritesheet, game.renderer, PLAYER_WITH_PISTOL_PNG_DATA, CHARACTER_DIMENSIONS, { 16, 16 }, 32, 4, nil, 0);
+	init_spritesheet(player.walkWithPistolSpritesheet, game.renderer, PLAYER_WITH_PISTOL_PNG_DATA, get_game_data(game).characterDimensions, { 16, 16 }, 32, 4, nil, 0);
 	player.currentSpritesheet = player.walkSpritesheet;
 
 	return;
@@ -104,7 +89,7 @@ create_player :: proc(game: ^Game) -> (player: Player) {
 init_character :: proc(game: ^Game, character: ^Character, position: Vector2) {
 	character.game = game;
 
-	character.dimensions = CHARACTER_DIMENSIONS / game.currentOutputTileSize;
+	character.dimensions = get_game_data(game).characterDimensions / game.currentOutputTileSize;
 	character.worldPosition = position;
 	character.health = 1.0;
 }
@@ -148,22 +133,22 @@ update_player :: proc(using player: ^Player, deltaTime: f64) {
 	// Movement
 	acceleration = { 0, 0 };
 	if game.keysPressed[sdl.Scancode.W] {
-		acceleration = rotationVector * PLAYER_WALK_ACC;
+		acceleration = rotationVector * get_game_data(game).playerWalkAcceleration;
 	}
 	if game.keysPressed[sdl.Scancode.S] {
-		acceleration = rotationVector * -PLAYER_WALK_ACC * 0.5;
+		acceleration = rotationVector * -get_game_data(game).playerWalkAcceleration * 0.5;
 	}
 	if game.keysPressed[sdl.Scancode.A] {
-		rotation += PLAYER_ROTATION_SPEED;
+		rotation += get_game_data(game).playerRotationSpeed;
 	}
 	if game.keysPressed[sdl.Scancode.D] {
 		rotation += 360.0;
-		rotation -= PLAYER_ROTATION_SPEED;
+		rotation -= get_game_data(game).playerRotationSpeed;
 	}
 	
 	rotation = math.mod_f64(rotation, 360.0);
 	velocity += acceleration * deltaTime;
-	velocity *= PLAYER_FRICTION;
+	velocity *= get_game_data(game).playerFriction;
 
 	if abs(velocity.x) < 0.15 do velocity.x = 0;
 	if abs(velocity.y) < 0.15 do velocity.y = 0;
@@ -179,7 +164,7 @@ update_player :: proc(using player: ^Player, deltaTime: f64) {
 		bullet.worldPosition += bullet.velocity * deltaTime;
 
 		bullet.lifeTime += deltaTime;
-		if bullet.lifeTime >= PISTOL_SHOT_LIFETIME ||
+		if bullet.lifeTime >= get_game_data(game).pistolShotLifetime ||
 		   bullet.worldPosition.x < 0 || bullet.worldPosition.y < 0 ||
 		   bullet.worldPosition.x > game.currentWorldDimensions.x || bullet.worldPosition.y > game.currentWorldDimensions.y {
 			destroy_bullet(player, bulletIndex);
@@ -197,7 +182,7 @@ update_player :: proc(using player: ^Player, deltaTime: f64) {
 				if zombie.health <= 0.0 {
 					destory_zombie(&zombie, zombieIndex);
 				} else {
-					zombie.worldPosition += vec2_normalise(bullet.velocity) * PISTOL_KNOCKBACK;
+					zombie.worldPosition += vec2_normalise(bullet.velocity) * get_game_data(game).pistolKnockback;
 				}
 
 				destroy_bullet(player, bulletIndex);
@@ -321,13 +306,13 @@ draw_character_health_bar :: proc(using character: ^Character, viewOffset: Vecto
 		
 		if player.inventorySlots[player.currentlySelectedInventorySlot].type == .MedKit {
 			healthBarRect.x += healthBarRect.w;
-			healthBarRect.w = i32(f64(fullHealthBarRect.w) * MED_KIT_HEALTH_BOOST);
+			healthBarRect.w = i32(f64(fullHealthBarRect.w) * get_game_data(game).medKitHealthBoost);
 
 			if healthBarRect.x + healthBarRect.w > fullHealthBarRect.x + fullHealthBarRect.w {
 				healthBarRect.w = (fullHealthBarRect.x + fullHealthBarRect.w) - healthBarRect.x;
 			}
 
-			colour = get_health_colour(health + MED_KIT_HEALTH_BOOST);
+			colour = get_health_colour(health + get_game_data(game).medKitHealthBoost);
 			sdl.SetRenderDrawColor(game.renderer, colour.r, colour.g, colour.b, u8(((math.sin(healthBarFrame) + 1) / 2) * 127));
 			sdl.RenderFillRect(game.renderer, &healthBarRect);
 
@@ -371,7 +356,7 @@ shoot :: proc(using player: ^Player) {
 	slot := &inventorySlots[currentlySelectedInventorySlot];
 	if slot.type == .Pistol {
 		if slot.data.(PistolData).bulletsLeft > 0 {
-			if timeSinceLastShot >= PISTOL_SHOT_COOLDOWN {
+			if timeSinceLastShot >= get_game_data(game).pistolShotCooldown {
 				timeSinceLastShot = 0;
 				(&slot.data.(PistolData)).bulletsLeft -= 1;
 
@@ -414,7 +399,7 @@ use_item :: proc(using player: ^Player) {
 			// Do nothing
 
 		case .MedKit:
-			health += MED_KIT_HEALTH_BOOST;
+			health += get_game_data(game).medKitHealthBoost;
 			if health > 1.0 do health = 1.0;
 
 			inventorySlots[currentlySelectedInventorySlot] = InventoryItem { type = .Empty };
@@ -444,13 +429,13 @@ create_pistol_bullet :: proc(using player: ^Player) -> (bullet: Bullet) {
 	rotationRadians := math.to_radians_f64(rotation);
 	
 	bullet.worldPosition = worldPosition;
-	bullet.velocity.x = math.cos_f64(rotationRadians) * PISTOL_SHOT_VELOCITY;
-	bullet.velocity.y = -math.sin_f64(rotationRadians) * PISTOL_SHOT_VELOCITY;
+	bullet.velocity.x = math.cos_f64(rotationRadians) * get_game_data(game).pistolShotVelocity;
+	bullet.velocity.y = -math.sin_f64(rotationRadians) * get_game_data(game).pistolShotVelocity;
 
 	bullet.spritesheet = new(Spritesheet);
 	init_spritesheet(bullet.spritesheet, game.renderer, PISTOL_BULLET_PNG_DATA, { 0, 0 }, { 0, 0 }, 1, 1, nil, 0);
 
-	bullet.damage = rand.float64_range(PISTOL_MIN_DAMAGE, PISTOL_MAX_DAMAGE);
+	bullet.damage = rand.float64_range(get_game_data(game).pistolMinDamage, get_game_data(game).pistolMaxDamage);
 	
 	return;
 }
