@@ -261,8 +261,6 @@ update_character_texture :: proc(using character: ^Character, deltaTime: f64) {
 }
 
 draw_player :: proc(using player: ^Player, viewOffset: Vector2) {
-	printf("{}, {}\n", (player.worldPosition - viewOffset), (player.worldPosition - viewOffset) * OUTPUT_TILE_SIZE);
-	
 	draw_spritesheet(player.currentSpritesheet, (player.worldPosition - viewOffset) * OUTPUT_TILE_SIZE);
 
 	for bullet in activeBullets {
@@ -366,7 +364,7 @@ draw_character_health_bar :: proc(using character: ^Character, viewOffset: Vecto
 }
 
 shoot :: proc(using player: ^Player) {
-	slot := inventorySlots[currentlySelectedInventorySlot];
+	slot := &inventorySlots[currentlySelectedInventorySlot];
 	if slot.type == .Pistol {
 		if slot.data.(PistolData).bulletsLeft > 0 {
 			if timeSinceLastShot >= PISTOL_SHOT_COOLDOWN {

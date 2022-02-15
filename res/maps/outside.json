@@ -3,8 +3,7 @@
     {
      "export":
         {
-         "format":"json",
-         "target":"..\/map\/outside-1.json"
+         "format":"json"
         }
     },
  "height":100,
@@ -291,7 +290,7 @@
                         {
                          "name":"contents",
                          "type":"string",
-                         "value":"med_kit"
+                         "value":"pistol"
                         }],
                  "rotation":0,
                  "type":"",
@@ -1107,7 +1106,7 @@
  "tilesets":[
         {
          "firstgid":1,
-         "source":"..\/map\/tileset.json"
+         "source":"tileset.json"
         }],
  "tilewidth":16,
  "type":"map",
