@@ -64,8 +64,8 @@ update_zombie :: proc(using zombie: ^Zombie, deltaTime: f64) {
 	
 	// Checks for collision with player
 	timeSinceLastDamageDealt += deltaTime;
-	worldPositionRect := multiply_sdl_rect(get_character_world_rect(zombie), game.currentOutputTileSize);
-	playerRect := multiply_sdl_rect(get_character_world_rect(&game.player), game.currentOutputTileSize);
+	worldPositionRect := get_character_world_rect_multiplied(zombie, game.currentOutputTileSize);
+	playerRect := get_character_world_rect_multiplied(&game.player, game.currentOutputTileSize);
 
 	if timeSinceLastDamageDealt >= get_game_data(game).zombieDamageCooldown && sdl.HasIntersection(&worldPositionRect, &playerRect) {
 		timeSinceLastDamageDealt = 0;

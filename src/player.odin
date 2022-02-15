@@ -205,7 +205,7 @@ update_player :: proc(using player: ^Player, deltaTime: f64) {
 
 update_character_position :: proc(using character: ^Character, deltaTime: f64) {
 	worldPosition.x += velocity.x * deltaTime;
-	worldPositionRect := multiply_sdl_rect(get_character_world_rect(character), game.currentOutputTileSize);
+	worldPositionRect := get_character_world_rect_multiplied(character, game.currentOutputTileSize);
 
 	for object in &game.currentTilemap.objects {
 		objectRect := multiply_sdl_rect(object, game.currentOutputTileSize);
@@ -217,7 +217,7 @@ update_character_position :: proc(using character: ^Character, deltaTime: f64) {
 	}
 
 	worldPosition.y += velocity.y * deltaTime;
-	worldPositionRect = multiply_sdl_rect(get_character_world_rect(character), game.currentOutputTileSize);
+	worldPositionRect = get_character_world_rect_multiplied(character, game.currentOutputTileSize);
 
 	for object in &game.currentTilemap.objects {
 		objectRect := multiply_sdl_rect(object, game.currentOutputTileSize);
@@ -407,11 +407,15 @@ use_item :: proc(using player: ^Player) {
 }
 
 get_character_world_rect :: proc(using character: ^Character) -> sdl.Rect {
+	return get_character_world_rect_multiplied(character, { 1, 1 });
+}
+
+get_character_world_rect_multiplied :: proc(using character: ^Character, factor: Vector2) -> sdl.Rect {
 	return {
-		i32(worldPosition.x - (dimensions.x / 2.0)),
-		i32(worldPosition.y + (dimensions.y / 4.0)),
-		i32(dimensions.x),
-		i32(dimensions.y / 2.0),
+		i32((worldPosition.x - (dimensions.x / 2.0)) * factor.x),
+		i32((worldPosition.y + (dimensions.y / 4.0)) * factor.y),
+		i32(dimensions.x * factor.x),
+		i32((dimensions.y / 2.0) * factor.y),
 	};
 }
 
