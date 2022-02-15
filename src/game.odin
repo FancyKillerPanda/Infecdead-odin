@@ -303,6 +303,10 @@ create_window :: proc(game: ^Game) -> (success: bool) {
 		size := min(displayMode.w / 16, displayMode.h / 9);
 		size -= 10; // Makes the window a bit smaller than the screen size
 		windowDimensions = { f64(size * 16), f64(size * 9) };
+
+		if windowDimensions.x > 1920 && windowDimensions.y > 1080 {
+			windowDimensions = { 1920, 1080 };
+		}
 	}
 	
 	game.window = sdl.CreateWindow("Infecdead", 0, 0, i32(windowDimensions.x), i32(windowDimensions.y), WINDOW_FLAGS);
