@@ -12,6 +12,7 @@ FONT_PIXELTYPE_DATA :: #load("../res/fonts/Pixeltype.ttf");
 MAP_TILESET_DATA :: #load("../res/maps/tileset.json");
 MAP_TILESET_IMAGE_DATA :: #load("../res/maps/tileset.png");
 MAP_OUTSIDE_DATA :: #load("../res/maps/outside.json");
+MAP_TOWN_HALL_DATA :: #load("../res/maps/town_hall.json");
 
 PISTOL_BULLET_PNG_DATA :: #load("../res/objects/pistol_bullet.png");
 CHEST_PNG_DATA :: #load("../res/objects/chest.png");

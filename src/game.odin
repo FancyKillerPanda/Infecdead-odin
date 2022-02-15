@@ -7,6 +7,7 @@ import "core:time"
 import sdl "vendor:sdl2"
 
 OUTSIDE_OUTPUT_TILE_SIZE: Vector2 : { 32, 32 };
+TOWN_HALL_OUTPUT_TILE_SIZE: Vector2 : { 32, 32 };
 MINIMAP_TILE_SIZE: Vector2 : { 2, 2 };
 
 Game :: struct {
@@ -27,6 +28,7 @@ Game :: struct {
 	
 	currentTilemap: ^Tilemap,
 	outsideTilemap: ^Tilemap,
+	townHallTilemap: ^Tilemap,
 
 	player: Player,
 	zombies: [dynamic] Zombie,
@@ -58,6 +60,8 @@ init_game :: proc(using game: ^Game) -> bool {
 	
 	outsideTilemap = new(Tilemap);
 	outsideTilemap^ = parse_tilemap(game, MAP_OUTSIDE_DATA) or_return;
+	townHallTilemap = new(Tilemap);
+	townHallTilemap^ = parse_tilemap(game, MAP_TOWN_HALL_DATA) or_return;
 
 	set_current_map(game, outsideTilemap);
 
@@ -79,7 +83,8 @@ init_game :: proc(using game: ^Game) -> bool {
 }
 
 reset_game :: proc(using game: ^Game) {
-	set_current_map(game, outsideTilemap);
+	set_current_map(game, townHallTilemap);
+	// set_current_map(game, outsideTilemap);
 	
 	player = create_player(game);
 	spawn_entities(currentTilemap);
@@ -183,19 +188,13 @@ update_game :: proc(using game: ^Game, deltaTime: f64) {
 		update_chests(game);
 		
 		// The view offset (basically a camera) tracks the player
-		tilesOnScreen := game.screenDimensions / currentOutputTileSize;
+		tilesOnScreen := screenDimensions / currentOutputTileSize;
+		tilesOnScreen.x = clamp(tilesOnScreen.x, 0, currentTilemap.numberOfTiles.x);
+		tilesOnScreen.y = clamp(tilesOnScreen.y, 0, currentTilemap.numberOfTiles.y);
+		
 		viewOffset = player.worldPosition - (tilesOnScreen / 2.0);
-
-		if viewOffset.x < 0.0 do viewOffset.x = 0.0;
-		if viewOffset.y < 0.0 do viewOffset.y = 0.0;
-
-		if viewOffset.x + tilesOnScreen.x > currentWorldDimensions.x {
-			viewOffset.x = currentWorldDimensions.x - tilesOnScreen.x;
-		}
-
-		if viewOffset.y + tilesOnScreen.y > currentWorldDimensions.y {
-			viewOffset.y = currentWorldDimensions.y - tilesOnScreen.y;
-		}
+		viewOffset.x = clamp(viewOffset.x, 0, currentWorldDimensions.x - tilesOnScreen.x);
+		viewOffset.y = clamp(viewOffset.y, 0, currentWorldDimensions.y - tilesOnScreen.y);
 	}
 }
 
@@ -301,6 +300,8 @@ set_current_map :: proc(using game: ^Game, tilemap: ^Tilemap) {
 
 	if tilemap == outsideTilemap {
 		currentOutputTileSize = OUTSIDE_OUTPUT_TILE_SIZE;
+	} else if tilemap == townHallTilemap {
+		currentOutputTileSize = TOWN_HALL_OUTPUT_TILE_SIZE;
 	} else {
 		assert(false, "Unknown tilemap.");
 	}

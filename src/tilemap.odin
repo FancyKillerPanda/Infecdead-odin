@@ -254,8 +254,12 @@ draw_tilemap :: proc(using tilemap: ^Tilemap, pass: u32, outputPosition: Vector2
 		textureRect = create_sdl_rect(0, numberOfTiles * TILEMAP_INTERNAL_TILE_SIZE);
 		outputRect = create_sdl_rect(outputPosition, numberOfTiles * outputTileDimensions); 
 	} else {
-		textureRect = create_sdl_rect(viewOffset * TILEMAP_INTERNAL_TILE_SIZE, (game.screenDimensions / outputTileDimensions) * TILEMAP_INTERNAL_TILE_SIZE);
-		outputRect = create_sdl_rect(outputPosition, game.screenDimensions); // TODO(fkp): This is probably wrong
+		numberOfTilesOnScreen := game.screenDimensions / outputTileDimensions;
+		numberOfTilesOnScreen.x = clamp(numberOfTilesOnScreen.x, 0, numberOfTiles.x - viewOffset.x);
+		numberOfTilesOnScreen.y = clamp(numberOfTilesOnScreen.y, 0, numberOfTiles.y - viewOffset.y);
+
+		textureRect = create_sdl_rect(viewOffset * TILEMAP_INTERNAL_TILE_SIZE, numberOfTilesOnScreen * TILEMAP_INTERNAL_TILE_SIZE);
+		outputRect = create_sdl_rect(outputPosition, numberOfTilesOnScreen * outputTileDimensions);
 	}
 
 	sdl.RenderCopy(game.renderer, textures[pass], &textureRect, &outputRect);
