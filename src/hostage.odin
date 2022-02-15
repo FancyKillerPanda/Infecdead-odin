@@ -85,8 +85,9 @@ update_hostage :: proc(using hostage: ^Hostage, hostageIndex: int, deltaTime: f6
 	// Updates position and does collision checking
 	update_character_position(hostage, deltaTime);
 
-	worldRect := get_character_world_rect(hostage);
-	if sdl.HasIntersection(&worldRect, &game.tilemap.hostageCollectionRect) {
+	worldRect := multiply_sdl_rect(get_character_world_rect(hostage), OUTPUT_TILE_SIZE);
+	collectionRect := multiply_sdl_rect(game.tilemap.hostageCollectionRect, OUTPUT_TILE_SIZE);
+	if sdl.HasIntersection(&worldRect, &collectionRect) {
 		game.hostagesSaved += 1;
 		game.hostagesLeft -= 1;
 

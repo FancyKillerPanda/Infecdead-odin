@@ -184,11 +184,11 @@ update_player :: proc(using player: ^Player, deltaTime: f64) {
 			continue;
 		}
 
-		bulletRect := create_sdl_rect(bullet.worldPosition - (bullet.spritesheet.outputSize / OUTPUT_TILE_SIZE), (bullet.spritesheet.outputSize / OUTPUT_TILE_SIZE));
+		bulletRect := create_sdl_rect((bullet.worldPosition * OUTPUT_TILE_SIZE) - (bullet.spritesheet.outputSize / 2), bullet.spritesheet.outputSize);
 
 		// TODO(fkp): Friendly fire
 		for zombie, zombieIndex in &game.zombies {
-			zombieRect := create_sdl_rect(zombie.worldPosition - (zombie.dimensions / 2), zombie.dimensions);
+			zombieRect := create_sdl_rect((zombie.worldPosition - (zombie.dimensions / 2)) * OUTPUT_TILE_SIZE, zombie.dimensions * OUTPUT_TILE_SIZE);
 			
 			if sdl.HasIntersection(&bulletRect, &zombieRect) {
 				zombie.health -= bullet.damage;
@@ -218,10 +218,11 @@ update_player :: proc(using player: ^Player, deltaTime: f64) {
 
 update_character_position :: proc(using character: ^Character, deltaTime: f64) {
 	worldPosition.x += velocity.x * deltaTime;
-	worldPositionRect := get_character_world_rect(character);
+	worldPositionRect := multiply_sdl_rect(get_character_world_rect(character), OUTPUT_TILE_SIZE);
 
 	for object in &game.tilemap.objects {
-		if sdl.HasIntersection(&worldPositionRect, &object) {
+		objectRect := multiply_sdl_rect(object, OUTPUT_TILE_SIZE);
+		if sdl.HasIntersection(&worldPositionRect, &objectRect) {
 			worldPosition.x -= velocity.x * deltaTime;
 			velocity.x = 0;
 			break;
@@ -229,10 +230,11 @@ update_character_position :: proc(using character: ^Character, deltaTime: f64) {
 	}
 
 	worldPosition.y += velocity.y * deltaTime;
-	worldPositionRect = get_character_world_rect(character);
+	worldPositionRect = multiply_sdl_rect(get_character_world_rect(character), OUTPUT_TILE_SIZE);
 
 	for object in &game.tilemap.objects {
-		if sdl.HasIntersection(&worldPositionRect, &object) {
+		objectRect := multiply_sdl_rect(object, OUTPUT_TILE_SIZE);
+		if sdl.HasIntersection(&worldPositionRect, &objectRect) {
 			worldPosition.y -= velocity.y * deltaTime;
 			velocity.y = 0;
 			break;

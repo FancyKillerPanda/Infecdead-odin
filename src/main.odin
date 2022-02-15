@@ -67,3 +67,12 @@ create_sdl_rect :: proc(position: Vector2, dimensions: Vector2) -> (rect: sdl.Re
 
 	return;
 }
+
+multiply_sdl_rect :: proc(rect: sdl.Rect, factor: Vector2) -> sdl.Rect {
+	return {
+		rect.x * i32(factor.x),
+		rect.y * i32(factor.y),
+		rect.w * i32(factor.x),
+		rect.h * i32(factor.y),
+	};
+}
