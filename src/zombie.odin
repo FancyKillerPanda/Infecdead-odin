@@ -5,9 +5,9 @@ import "core:math/rand"
 
 import sdl "vendor:sdl2"
 
-ZOMBIE_WALK_ACC :: 150;
+ZOMBIE_WALK_ACC :: 9.4;
 ZOMBIE_FRICTION :: 0.9;
-ZOMBIE_AGGRO_DISTANCE :: 250;
+ZOMBIE_AGGRO_DISTANCE :: 15.6;
 
 ZOMBIE_MIN_DAMAGE :: 0.1;
 ZOMBIE_MAX_DAMAGE :: 0.2;
@@ -25,7 +25,7 @@ create_zombie :: proc(game: ^Game, position: Vector2) -> (zombie: Zombie) {
 	zombie.type = .Zombie;
 	
 	zombie.walkSpritesheet = new(Spritesheet);
-	init_spritesheet(zombie.walkSpritesheet, game.renderer, ZOMBIE_PNG_DATA, zombie.dimensions, { 16, 16 }, 64, 8, nil, 0);
+	init_spritesheet(zombie.walkSpritesheet, game.renderer, ZOMBIE_PNG_DATA, zombie.dimensions * OUTPUT_TILE_SIZE, { 16, 16 }, 64, 8, nil, 0);
 	zombie.currentSpritesheet = zombie.walkSpritesheet;
 
 	return;
@@ -64,8 +64,8 @@ update_zombie :: proc(using zombie: ^Zombie, deltaTime: f64) {
 	velocity += acceleration * deltaTime;
 	velocity *= ZOMBIE_FRICTION;
 
-	if abs(velocity.x) < 2.5 do velocity.x = 0;
-	if abs(velocity.y) < 2.5 do velocity.y = 0;
+	if abs(velocity.x) < 0.15 do velocity.x = 0;
+	if abs(velocity.y) < 0.15 do velocity.y = 0;
 	
 	// Updates position and does collision checking
 	update_character_position(zombie, deltaTime);
@@ -85,9 +85,7 @@ update_zombie :: proc(using zombie: ^Zombie, deltaTime: f64) {
 }
 
 draw_zombie :: proc(using zombie: ^Zombie, viewOffset: Vector2) {
-	scale := OUTPUT_TILE_SIZE / TILEMAP_TILE_SIZE;
-
-	draw_spritesheet(currentSpritesheet, (worldPosition - viewOffset) * scale);
+	draw_spritesheet(currentSpritesheet, (worldPosition - viewOffset) * OUTPUT_TILE_SIZE);
 	draw_character_health_bar(zombie, viewOffset);
 }
 

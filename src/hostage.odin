@@ -7,11 +7,11 @@ import "core:strings"
 
 import sdl "vendor:sdl2"
 
-HOSTAGE_WALK_ACC :: 325;
+HOSTAGE_WALK_ACC :: 20;
 HOSTAGE_FRICTION :: 0.9;
-HOSTAGE_FOLLOW_MIN_DISTANCE :: 25;
-HOSTAGE_FOLLOW_MAX_DISTANCE :: 150;
-HOSTAGE_SCARE_DISTANCE :: 150;
+HOSTAGE_FOLLOW_MIN_DISTANCE :: 1.5;
+HOSTAGE_FOLLOW_MAX_DISTANCE :: 10;
+HOSTAGE_SCARE_DISTANCE :: 10;
 
 HOSTAGE_HEALTH_BAR_HEIGHT :: ZOMBIE_HEALTH_BAR_HEIGHT;
 
@@ -28,7 +28,7 @@ create_hostage :: proc(game: ^Game, position: Vector2) -> (hostage: Hostage) {
 	hostageTextureIndex := rand.uint32() % 3;
 	
 	hostage.walkSpritesheet = new(Spritesheet);
-	init_spritesheet(hostage.walkSpritesheet, game.renderer, HOSTAGE_TEXTURES[hostageTextureIndex], hostage.dimensions, { 16, 16 }, 32, 4, nil, 0);
+	init_spritesheet(hostage.walkSpritesheet, game.renderer, HOSTAGE_TEXTURES[hostageTextureIndex], hostage.dimensions * OUTPUT_TILE_SIZE, { 16, 16 }, 32, 4, nil, 0);
 	hostage.currentSpritesheet = hostage.walkSpritesheet;
 
 	return;
@@ -79,8 +79,8 @@ update_hostage :: proc(using hostage: ^Hostage, hostageIndex: int, deltaTime: f6
 	velocity += acceleration * deltaTime;
 	velocity *= HOSTAGE_FRICTION;
 
-	if abs(velocity.x) < 2.5 do velocity.x = 0;
-	if abs(velocity.y) < 2.5 do velocity.y = 0;
+	if abs(velocity.x) < 0.15 do velocity.x = 0;
+	if abs(velocity.y) < 0.15 do velocity.y = 0;
 	
 	// Updates position and does collision checking
 	update_character_position(hostage, deltaTime);
@@ -110,8 +110,6 @@ update_hostage :: proc(using hostage: ^Hostage, hostageIndex: int, deltaTime: f6
 }
 
 draw_hostage :: proc(using hostage: ^Hostage, viewOffset: Vector2) {
-	scale := OUTPUT_TILE_SIZE / TILEMAP_TILE_SIZE;
-
-	draw_spritesheet(currentSpritesheet, (worldPosition - viewOffset) * scale);
+	draw_spritesheet(currentSpritesheet, (worldPosition - viewOffset) * OUTPUT_TILE_SIZE);
 	draw_character_health_bar(hostage, viewOffset);
 }

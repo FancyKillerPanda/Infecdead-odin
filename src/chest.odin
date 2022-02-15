@@ -22,13 +22,13 @@ update_chests :: proc(using game: ^Game) {
 	
 	// Since the player won't actually be touching the chest, this expands the player hit box
 	// slightly to check if they are near enough to it.
-	playerWorldPositionRect.x -= 10;
-	playerWorldPositionRect.y -= 10;
-	playerWorldPositionRect.w += 20;
-	playerWorldPositionRect.h += 20;
+	playerWorldPositionRect.x -= 1;
+	playerWorldPositionRect.y -= 1;
+	playerWorldPositionRect.w += 2;
+	playerWorldPositionRect.h += 2;
 	
 	for chest in &chests {
-		chestRect := create_sdl_rect(chest.worldPosition, TILEMAP_TILE_SIZE);
+		chestRect := create_sdl_rect(chest.worldPosition, { 1, 1 });
 
 		if sdl.HasIntersection(&playerWorldPositionRect, &chestRect) {
 			chest.isOpen = true;
@@ -39,18 +39,16 @@ update_chests :: proc(using game: ^Game) {
 }
 
 draw_chests :: proc(game: ^Game, viewOffset: Vector2) {
-	scale := OUTPUT_TILE_SIZE / TILEMAP_TILE_SIZE;
-	
 	for chest in &game.chests {
 		spritesheet_set_frame(&chestSpritesheet, u32(chest.isOpen));
-		draw_spritesheet(&chestSpritesheet, (chest.worldPosition - viewOffset) * scale);
+		draw_spritesheet(&chestSpritesheet, (chest.worldPosition - viewOffset) * OUTPUT_TILE_SIZE);
 	}
 }
 
 draw_chests_inventory_slots :: proc(game: ^Game, viewOffset: Vector2) {
 	for chest in &game.chests {
 		if chest.isOpen {
-			iconPosition := ((chest.worldPosition - viewOffset) / TILEMAP_TILE_SIZE) * OUTPUT_TILE_SIZE;
+			iconPosition := (chest.worldPosition - viewOffset) * OUTPUT_TILE_SIZE;
 			iconPosition.y -= chestContentsIconBackground.outputSize.y * 2 / 3; // For some spacing
 
 			draw_spritesheet(&chestContentsIconBackground, iconPosition);

@@ -7,7 +7,7 @@ import "core:strings"
 
 import sdl "vendor:sdl2"
 
-PLAYER_WALK_ACC :: 500;
+PLAYER_WALK_ACC :: 32;
 PLAYER_FRICTION :: 0.9;
 PLAYER_ROTATION_SPEED :: 7;
 
@@ -17,11 +17,11 @@ PLAYER_HEALTH_BAR_HEIGHT :: 40;
 MED_KIT_HEALTH_BOOST :: 0.3;
 
 PISTOL_SHOT_COOLDOWN :: 0.4;
-PISTOL_SHOT_VELOCITY :: 400;
+PISTOL_SHOT_VELOCITY :: 25;
 PISTOL_SHOT_LIFETIME :: 1.0;
 PISTOL_MIN_DAMAGE :: 0.2;
 PISTOL_MAX_DAMAGE :: 0.4;
-PISTOL_KNOCKBACK :: 5;
+PISTOL_KNOCKBACK :: 0.16;
 
 Character :: struct {
 	game: ^Game,
@@ -91,9 +91,9 @@ create_player :: proc(game: ^Game) -> (player: Player) {
 	player.type = .Player;
 	
 	player.walkSpritesheet = new(Spritesheet);
-	init_spritesheet(player.walkSpritesheet, game.renderer, PLAYER_PNG_DATA, player.dimensions, { 16, 16 }, 32, 4, nil, 0);
+	init_spritesheet(player.walkSpritesheet, game.renderer, PLAYER_PNG_DATA, player.dimensions * OUTPUT_TILE_SIZE, { 16, 16 }, 32, 4, nil, 0);
 	player.walkWithPistolSpritesheet = new(Spritesheet);
-	init_spritesheet(player.walkWithPistolSpritesheet, game.renderer, PLAYER_WITH_PISTOL_PNG_DATA, player.dimensions, { 16, 16 }, 32, 4, nil, 0);
+	init_spritesheet(player.walkWithPistolSpritesheet, game.renderer, PLAYER_WITH_PISTOL_PNG_DATA, player.dimensions * OUTPUT_TILE_SIZE, { 16, 16 }, 32, 4, nil, 0);
 	player.currentSpritesheet = player.walkSpritesheet;
 
 	return;
@@ -102,7 +102,7 @@ create_player :: proc(game: ^Game) -> (player: Player) {
 init_character :: proc(game: ^Game, character: ^Character, position: Vector2) {
 	character.game = game;
 
-	character.dimensions = { 64, 64 };
+	character.dimensions = { 64, 64 } / OUTPUT_TILE_SIZE;
 	character.worldPosition = position;
 	character.health = 1.0;
 }
@@ -163,8 +163,8 @@ update_player :: proc(using player: ^Player, deltaTime: f64) {
 	velocity += acceleration * deltaTime;
 	velocity *= PLAYER_FRICTION;
 
-	if abs(velocity.x) < 2.5 do velocity.x = 0;
-	if abs(velocity.y) < 2.5 do velocity.y = 0;
+	if abs(velocity.x) < 0.15 do velocity.x = 0;
+	if abs(velocity.y) < 0.15 do velocity.y = 0;
 	
 	// Updates position and does collision checking
 	update_character_position(player, deltaTime);
@@ -184,7 +184,7 @@ update_player :: proc(using player: ^Player, deltaTime: f64) {
 			continue;
 		}
 
-		bulletRect := create_sdl_rect(bullet.worldPosition - bullet.spritesheet.outputSize, bullet.spritesheet.outputSize);
+		bulletRect := create_sdl_rect(bullet.worldPosition - (bullet.spritesheet.outputSize / OUTPUT_TILE_SIZE), (bullet.spritesheet.outputSize / OUTPUT_TILE_SIZE));
 
 		// TODO(fkp): Friendly fire
 		for zombie, zombieIndex in &game.zombies {
@@ -239,8 +239,8 @@ update_character_position :: proc(using character: ^Character, deltaTime: f64) {
 		}
 	}
 
-	worldPosition.x = clamp(worldPosition.x, dimensions.x / 2.0, (game.tilemap.numberOfTiles.x * TILEMAP_TILE_SIZE.x) - (dimensions.x / 2.0));
-	worldPosition.y = clamp(worldPosition.y, dimensions.y / 2.0, (game.tilemap.numberOfTiles.y * TILEMAP_TILE_SIZE.y) - (dimensions.y / 2.0));
+	worldPosition.x = clamp(worldPosition.x, dimensions.x / 2.0, game.tilemap.numberOfTiles.x - (dimensions.x / 2.0));
+	worldPosition.y = clamp(worldPosition.y, dimensions.y / 2.0, game.tilemap.numberOfTiles.y - (dimensions.y / 2.0));
 }
 
 update_character_texture :: proc(using character: ^Character, deltaTime: f64) {
@@ -261,19 +261,20 @@ update_character_texture :: proc(using character: ^Character, deltaTime: f64) {
 }
 
 draw_player :: proc(using player: ^Player, viewOffset: Vector2) {
-	scale := OUTPUT_TILE_SIZE / TILEMAP_TILE_SIZE
-	draw_spritesheet(player.currentSpritesheet, (player.worldPosition - viewOffset) * scale);
+	printf("{}, {}\n", (player.worldPosition - viewOffset), (player.worldPosition - viewOffset) * OUTPUT_TILE_SIZE);
+	
+	draw_spritesheet(player.currentSpritesheet, (player.worldPosition - viewOffset) * OUTPUT_TILE_SIZE);
 
 	for bullet in activeBullets {
-		draw_spritesheet(bullet.spritesheet, (bullet.worldPosition - viewOffset) * scale);
+		draw_spritesheet(bullet.spritesheet, (bullet.worldPosition - viewOffset) * OUTPUT_TILE_SIZE);
 	}
 }
 
 draw_player_on_minimap :: proc(using player: ^Player, minimapPosition: Vector2) {
 	minimapPlayerRect: sdl.Rect = {
 		// -1 to centre the rect
-		i32(minimapPosition.x + (player.worldPosition.x * MINIMAP_TILE_SIZE.x / TILEMAP_TILE_SIZE.x) - 1),
-		i32(minimapPosition.y + (player.worldPosition.y * MINIMAP_TILE_SIZE.y / TILEMAP_TILE_SIZE.y) - 1),
+		i32(minimapPosition.x + (player.worldPosition.x * MINIMAP_TILE_SIZE.x) - 1),
+		i32(minimapPosition.y + (player.worldPosition.y * MINIMAP_TILE_SIZE.y) - 1),
 		i32(MINIMAP_TILE_SIZE.x * 3),
 		i32(MINIMAP_TILE_SIZE.y * 3),
 	};
@@ -343,20 +344,19 @@ draw_character_health_bar :: proc(using character: ^Character, viewOffset: Vecto
 	} else {
 		if health < 1.0 {
 			fullHealthBarRect: sdl.Rect = {
-				i32(worldPosition.x - viewOffset.x - (dimensions.x / 2)),
-				i32((worldPosition.y - viewOffset.y - (dimensions.y / 2)) - (ZOMBIE_HEALTH_BAR_HEIGHT * 2)),
-				i32(dimensions.x),
+				i32((worldPosition.x - viewOffset.x - (dimensions.x / 2)) * OUTPUT_TILE_SIZE.x),
+				i32(((worldPosition.y - viewOffset.y - (dimensions.y / 2)) * OUTPUT_TILE_SIZE.y) - (ZOMBIE_HEALTH_BAR_HEIGHT * 2)),
+				i32(dimensions.x * OUTPUT_TILE_SIZE.x),
 				i32(ZOMBIE_HEALTH_BAR_HEIGHT),
 			}
-	
+
 			healthBarRect: sdl.Rect = {
 				fullHealthBarRect.x,
 				fullHealthBarRect.y,
 				i32(f64(fullHealthBarRect.w) * health),
 				fullHealthBarRect.h,
 			};
-	
-			
+
 			sdl.SetRenderDrawColor(game.renderer, 0, 255, 0, 255);
 			sdl.RenderFillRect(game.renderer, &healthBarRect);
 			sdl.SetRenderDrawColor(game.renderer, 0, 0, 0, 255);
@@ -420,13 +420,11 @@ use_item :: proc(using player: ^Player) {
 }
 
 get_character_world_rect :: proc(using character: ^Character) -> sdl.Rect {
-	worldDimensions := dimensions / OUTPUT_TILE_SIZE;
-	
 	return {
-		i32(worldPosition.x - (worldDimensions.x / 2.0)),
-		i32(worldPosition.y + (worldDimensions.y / 4.0)),
-		i32(worldDimensions.x),
-		i32(worldDimensions.y / 2.0),
+		i32(worldPosition.x - (dimensions.x / 2.0)),
+		i32(worldPosition.y + (dimensions.y / 4.0)),
+		i32(dimensions.x),
+		i32(dimensions.y / 2.0),
 	};
 }
 

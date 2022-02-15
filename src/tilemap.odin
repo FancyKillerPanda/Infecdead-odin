@@ -9,7 +9,7 @@ import "core:strings"
 import sdl "vendor:sdl2"
 import img "vendor:sdl2/image"
 
-TILEMAP_TILE_SIZE: Vector2 : { 16, 16 };
+TILEMAP_INTERNAL_TILE_SIZE: Vector2 : { 16, 16 };
 
 Tilemap :: struct {
 	game: ^Game,
@@ -59,8 +59,8 @@ parse_tilemap :: proc(game_: ^Game) -> (tilemap: Tilemap, success: bool) {
 	
 	assert(mainObject["infinite"].(json.Boolean) == false, "Tilemap parser does not currently support infinite maps.");
 	assert(mainObject["orientation"].(json.String) == "orthogonal", "Tilemap parser currently only supports orthogonal maps.");
-	assert(mainObject["tilewidth"].(json.Integer) == i64(TILEMAP_TILE_SIZE.x), "Tilemap parser currently only supports 16x16 tiles.");
-	assert(mainObject["tileheight"].(json.Integer) == i64(TILEMAP_TILE_SIZE.y), "Tilemap parser currently only supports 16x16 tiles.");
+	assert(mainObject["tilewidth"].(json.Integer) == i64(TILEMAP_INTERNAL_TILE_SIZE.x), "Tilemap parser currently only supports 16x16 tiles.");
+	assert(mainObject["tileheight"].(json.Integer) == i64(TILEMAP_INTERNAL_TILE_SIZE.y), "Tilemap parser currently only supports 16x16 tiles.");
 	assert(len(mainObject["tilesets"].(json.Array)) == 1, "Tilemap parser currently only supports one tileset per map.");
 	
 	numberOfTiles.x = f64(mainObject["width"].(json.Integer));
@@ -88,10 +88,9 @@ parse_tilemap :: proc(game_: ^Game) -> (tilemap: Tilemap, success: bool) {
 	}
 
 	texturesAreDirty = true;
-	textureFirstPass = sdl.CreateTexture(game.renderer, u32(sdl.PixelFormatEnum.RGBA8888), sdl.TextureAccess.TARGET,
-										 i32(numberOfTiles.x * TILEMAP_TILE_SIZE.x), i32(numberOfTiles.y * TILEMAP_TILE_SIZE.y));
-	textureSecondPass = sdl.CreateTexture(game.renderer, u32(sdl.PixelFormatEnum.RGBA8888), sdl.TextureAccess.TARGET,
-										  i32(numberOfTiles.x * TILEMAP_TILE_SIZE.x), i32(numberOfTiles.y * TILEMAP_TILE_SIZE.y));
+	textureSize := numberOfTiles * TILEMAP_INTERNAL_TILE_SIZE;
+	textureFirstPass = sdl.CreateTexture(game.renderer, u32(sdl.PixelFormatEnum.RGBA8888), sdl.TextureAccess.TARGET, i32(textureSize.x), i32(textureSize.y));
+	textureSecondPass = sdl.CreateTexture(game.renderer, u32(sdl.PixelFormatEnum.RGBA8888), sdl.TextureAccess.TARGET, i32(textureSize.x), i32(textureSize.y));
 
 	if textureFirstPass == nil || textureSecondPass == nil {
 		printf("Error: Failed to create tilemap cache textures. Reason: {}\n", sdl.GetError());
@@ -119,13 +118,11 @@ add_tile_layer :: proc(using tilemap: ^Tilemap, layer: json.Object) {
 	}
 	
 	append(pass, [dynamic] i16 {});
-	// reserve(&pass[len(pass^) - 1], int(dimensions.x * dimensions.y));
 	numberToSkip: i16;
 	
 	for tile in layer["data"].(json.Array) {
 		value := cast(i16) tile.(json.Integer);
 		if value <= 0 {
-			// append(&pass[len(pass^) - 1], -1);
 			numberToSkip += 1;
 		} else {
 			if numberToSkip > 0 {
@@ -147,14 +144,12 @@ add_collisions_layer :: proc(using tilemap: ^Tilemap, layer: json.Object) {
 	reserve(&objects, len(objects) + len(objectValues));
 	
 	for value in objectValues {
-		objectRect: sdl.Rect = {
-			cast(i32) value.(json.Object)["x"].(json.Integer),
-			cast(i32) value.(json.Object)["y"].(json.Integer),
-			cast(i32) value.(json.Object)["width"].(json.Integer),
-			cast(i32) value.(json.Object)["height"].(json.Integer),
-		};
+		valueObj := value.(json.Object);
+		objectPosition: Vector2 = { f64(valueObj["x"].(json.Integer)), f64(valueObj["y"].(json.Integer)) } / TILEMAP_INTERNAL_TILE_SIZE;
+		objectDimensions: Vector2 = { f64(valueObj["width"].(json.Integer)), f64(valueObj["height"].(json.Integer)) } / TILEMAP_INTERNAL_TILE_SIZE;
+		objectRect := create_sdl_rect(objectPosition, objectDimensions);
 		
-		if value.(json.Object)["name"].(json.String) == "Hostage Collection" {
+		if valueObj["name"].(json.String) == "Hostage Collection" {
 			hostageCollectionRect = objectRect;
 		} else {
 			append(&objects, objectRect);
@@ -167,7 +162,8 @@ add_spawn_points :: proc(using tilemap: ^Tilemap, layer: json.Object) {
 	reserve(&spawnPoints, len(spawnPoints) + len(objectValues));
 
 	for value in objectValues {
-		worldPosition := Vector2 { f64(value.(json.Object)["x"].(json.Integer)), f64(value.(json.Object)["y"].(json.Integer)) } + (TILEMAP_TILE_SIZE / 2);
+		internalWorldPosition := Vector2 { f64(value.(json.Object)["x"].(json.Integer)), f64(value.(json.Object)["y"].(json.Integer)) } + (TILEMAP_INTERNAL_TILE_SIZE / 2);
+		worldPosition := internalWorldPosition / TILEMAP_INTERNAL_TILE_SIZE;
 		entityType: EntityType;
 		properties: map[string] string;
 		
@@ -201,8 +197,8 @@ parse_tileset :: proc(tilemap: ^Tilemap, data: [] u8, imageData: [] u8) -> (succ
 
 	mainObject := document.(json.Object);
 
-	assert(mainObject["tilewidth"].(json.Integer) == i64(TILEMAP_TILE_SIZE.x), "Tileset parser currently only supports 16x16 tiles.");
-	assert(mainObject["tileheight"].(json.Integer) == i64(TILEMAP_TILE_SIZE.y), "Tileset parser currently only supports 16x16 tiles.");
+	assert(mainObject["tilewidth"].(json.Integer) == i64(TILEMAP_INTERNAL_TILE_SIZE.x), "Tileset parser currently only supports 16x16 tiles.");
+	assert(mainObject["tileheight"].(json.Integer) == i64(TILEMAP_INTERNAL_TILE_SIZE.y), "Tileset parser currently only supports 16x16 tiles.");
 	assert(mainObject["margin"].(json.Integer) == 0, "Tileset parser currently only supports having 0 margin.");
 	assert(mainObject["spacing"].(json.Integer) == 0, "Tileset parser currently only supports having 0 spacing.");
 
@@ -255,10 +251,10 @@ draw_tilemap :: proc(using tilemap: ^Tilemap, pass: u32, outputPosition: Vector2
 	outputRect: sdl.Rect;
 	
 	if renderFullMap {
-		textureRect = create_sdl_rect(0, numberOfTiles * TILEMAP_TILE_SIZE);
+		textureRect = create_sdl_rect(0, numberOfTiles * TILEMAP_INTERNAL_TILE_SIZE);
 		outputRect = create_sdl_rect(outputPosition, numberOfTiles * outputTileDimensions); 
 	} else {
-		textureRect = create_sdl_rect(viewOffset, (game.screenDimensions / outputTileDimensions) * TILEMAP_TILE_SIZE);
+		textureRect = create_sdl_rect(viewOffset * TILEMAP_INTERNAL_TILE_SIZE, (game.screenDimensions / outputTileDimensions) * TILEMAP_INTERNAL_TILE_SIZE);
 		outputRect = create_sdl_rect(outputPosition, game.screenDimensions); // TODO(fkp): This is probably wrong
 	}
 
@@ -269,8 +265,8 @@ draw_tilemap_to_textures :: proc(using tilemap: ^Tilemap) {
 	passes: [2] [dynamic] [dynamic] i16 = { renderDataFirstPass, renderDataSecondPass };
 	textures: [2] ^sdl.Texture = { textureFirstPass, textureSecondPass };
 
-	rect := create_sdl_rect(0, TILEMAP_TILE_SIZE);
-	subrect := create_sdl_rect(0, TILEMAP_TILE_SIZE);
+	rect := create_sdl_rect(0, TILEMAP_INTERNAL_TILE_SIZE);
+	subrect := create_sdl_rect(0, TILEMAP_INTERNAL_TILE_SIZE);
 
 	for pass, i in passes {
 		sdl.SetRenderTarget(game.renderer, textures[i]);
@@ -280,16 +276,16 @@ draw_tilemap_to_textures :: proc(using tilemap: ^Tilemap) {
 			currentColumn: i32;
 			
 			for value in layer {
-				rect.x = currentColumn * i32(TILEMAP_TILE_SIZE.x);
-				rect.y = currentRow * i32(TILEMAP_TILE_SIZE.y);
+				rect.x = currentColumn * i32(TILEMAP_INTERNAL_TILE_SIZE.x);
+				rect.y = currentRow * i32(TILEMAP_INTERNAL_TILE_SIZE.y);
 				
 				if value < 0 {
 					advance_position(&currentRow, &currentColumn, tilemap, -value);
 					continue;
 				}
 	
-				subrect.x = i32((value % i16(tilesetTilesPerRow)) * i16(TILEMAP_TILE_SIZE.x));
-				subrect.y = i32((value / i16(tilesetTilesPerRow)) * i16(TILEMAP_TILE_SIZE.y));
+				subrect.x = i32((value % i16(tilesetTilesPerRow)) * i16(TILEMAP_INTERNAL_TILE_SIZE.x));
+				subrect.y = i32((value / i16(tilesetTilesPerRow)) * i16(TILEMAP_INTERNAL_TILE_SIZE.y));
 				
 				sdl.RenderCopy(game.renderer, tilesetTexture, &subrect, &rect);
 				advance_position(&currentRow, &currentColumn, tilemap);

@@ -177,18 +177,18 @@ update_game :: proc(using game: ^Game, deltaTime: f64) {
 		update_chests(game);
 		
 		// The view offset (basically a camera) tracks the player
-		tilesOnScreen := (game.screenDimensions / OUTPUT_TILE_SIZE) * TILEMAP_TILE_SIZE;
+		tilesOnScreen := game.screenDimensions / OUTPUT_TILE_SIZE;
 		viewOffset = player.worldPosition - (tilesOnScreen / 2.0);
 
 		if viewOffset.x < 0.0 do viewOffset.x = 0.0;
 		if viewOffset.y < 0.0 do viewOffset.y = 0.0;
 
-		if viewOffset.x + tilesOnScreen.x > currentWorldDimensions.x * TILEMAP_TILE_SIZE.x {
-			viewOffset.x = (currentWorldDimensions.x * TILEMAP_TILE_SIZE.x) - tilesOnScreen.x;
+		if viewOffset.x + tilesOnScreen.x > currentWorldDimensions.x {
+			viewOffset.x = currentWorldDimensions.x - tilesOnScreen.x;
 		}
 
-		if viewOffset.y + tilesOnScreen.y > currentWorldDimensions.y * TILEMAP_TILE_SIZE.y {
-			viewOffset.y = (currentWorldDimensions.y * TILEMAP_TILE_SIZE.y) - tilesOnScreen.y;
+		if viewOffset.y + tilesOnScreen.y > currentWorldDimensions.y {
+			viewOffset.y = currentWorldDimensions.y - tilesOnScreen.y;
 		}
 	}
 }
