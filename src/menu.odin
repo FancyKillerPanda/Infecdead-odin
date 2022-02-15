@@ -69,7 +69,7 @@ create_menu :: proc(game: ^Game) -> (menu: Menu) {
 	
 	menu.titleFont = ttf.OpenFontRW(fontData, false, 144);
 	sdl.RWseek(fontData, 0, sdl.SEEK_SET);
-	menu.textFont = ttf.OpenFontRW(fontData, true, 56);
+	menu.textFont = ttf.OpenFontRW(fontData, true, 48);
 
 	if menu.titleFont == nil || menu.textFont == nil {
 		printf("Error: Failed to load menu font. Reason: {}\n", sdl.GetError());
