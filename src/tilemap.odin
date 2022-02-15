@@ -45,11 +45,11 @@ EntityType :: enum {
 	Chest,
 }
 
-parse_tilemap :: proc(game_: ^Game) -> (tilemap: Tilemap, success: bool) {
+parse_tilemap :: proc(game_: ^Game, data: [] u8) -> (tilemap: Tilemap, success: bool) {
 	using tilemap;
 	game = game_;
 
-	document, error := json.parse(MAP_OUTSIDE_DATA, json.DEFAULT_SPECIFICATION, true);
+	document, error := json.parse(data, json.DEFAULT_SPECIFICATION, true);
 	if error != .None {
 		printf("Error: Failed to parse tilemap JSON. Reason: {}\n", error);
 		return;

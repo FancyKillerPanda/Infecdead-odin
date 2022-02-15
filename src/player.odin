@@ -7,6 +7,8 @@ import "core:strings"
 
 import sdl "vendor:sdl2"
 
+CHARACTER_DIMENSIONS: Vector2 : { 64, 64 };
+
 PLAYER_WALK_ACC :: 32;
 PLAYER_FRICTION :: 0.9;
 PLAYER_ROTATION_SPEED :: 7;
@@ -91,9 +93,9 @@ create_player :: proc(game: ^Game) -> (player: Player) {
 	player.type = .Player;
 	
 	player.walkSpritesheet = new(Spritesheet);
-	init_spritesheet(player.walkSpritesheet, game.renderer, PLAYER_PNG_DATA, player.dimensions * OUTPUT_TILE_SIZE, { 16, 16 }, 32, 4, nil, 0);
+	init_spritesheet(player.walkSpritesheet, game.renderer, PLAYER_PNG_DATA, CHARACTER_DIMENSIONS, { 16, 16 }, 32, 4, nil, 0);
 	player.walkWithPistolSpritesheet = new(Spritesheet);
-	init_spritesheet(player.walkWithPistolSpritesheet, game.renderer, PLAYER_WITH_PISTOL_PNG_DATA, player.dimensions * OUTPUT_TILE_SIZE, { 16, 16 }, 32, 4, nil, 0);
+	init_spritesheet(player.walkWithPistolSpritesheet, game.renderer, PLAYER_WITH_PISTOL_PNG_DATA, CHARACTER_DIMENSIONS, { 16, 16 }, 32, 4, nil, 0);
 	player.currentSpritesheet = player.walkSpritesheet;
 
 	return;
@@ -102,7 +104,7 @@ create_player :: proc(game: ^Game) -> (player: Player) {
 init_character :: proc(game: ^Game, character: ^Character, position: Vector2) {
 	character.game = game;
 
-	character.dimensions = { 64, 64 } / OUTPUT_TILE_SIZE;
+	character.dimensions = CHARACTER_DIMENSIONS / game.currentOutputTileSize;
 	character.worldPosition = position;
 	character.health = 1.0;
 }
@@ -184,11 +186,11 @@ update_player :: proc(using player: ^Player, deltaTime: f64) {
 			continue;
 		}
 
-		bulletRect := create_sdl_rect((bullet.worldPosition * OUTPUT_TILE_SIZE) - (bullet.spritesheet.outputSize / 2), bullet.spritesheet.outputSize);
+		bulletRect := create_sdl_rect((bullet.worldPosition * game.currentOutputTileSize) - (bullet.spritesheet.outputSize / 2), bullet.spritesheet.outputSize);
 
 		// TODO(fkp): Friendly fire
 		for zombie, zombieIndex in &game.zombies {
-			zombieRect := create_sdl_rect((zombie.worldPosition - (zombie.dimensions / 2)) * OUTPUT_TILE_SIZE, zombie.dimensions * OUTPUT_TILE_SIZE);
+			zombieRect := create_sdl_rect((zombie.worldPosition - (zombie.dimensions / 2)) * game.currentOutputTileSize, zombie.dimensions * game.currentOutputTileSize);
 			
 			if sdl.HasIntersection(&bulletRect, &zombieRect) {
 				zombie.health -= bullet.damage;
@@ -218,10 +220,10 @@ update_player :: proc(using player: ^Player, deltaTime: f64) {
 
 update_character_position :: proc(using character: ^Character, deltaTime: f64) {
 	worldPosition.x += velocity.x * deltaTime;
-	worldPositionRect := multiply_sdl_rect(get_character_world_rect(character), OUTPUT_TILE_SIZE);
+	worldPositionRect := multiply_sdl_rect(get_character_world_rect(character), game.currentOutputTileSize);
 
-	for object in &game.tilemap.objects {
-		objectRect := multiply_sdl_rect(object, OUTPUT_TILE_SIZE);
+	for object in &game.currentTilemap.objects {
+		objectRect := multiply_sdl_rect(object, game.currentOutputTileSize);
 		if sdl.HasIntersection(&worldPositionRect, &objectRect) {
 			worldPosition.x -= velocity.x * deltaTime;
 			velocity.x = 0;
@@ -230,10 +232,10 @@ update_character_position :: proc(using character: ^Character, deltaTime: f64) {
 	}
 
 	worldPosition.y += velocity.y * deltaTime;
-	worldPositionRect = multiply_sdl_rect(get_character_world_rect(character), OUTPUT_TILE_SIZE);
+	worldPositionRect = multiply_sdl_rect(get_character_world_rect(character), game.currentOutputTileSize);
 
-	for object in &game.tilemap.objects {
-		objectRect := multiply_sdl_rect(object, OUTPUT_TILE_SIZE);
+	for object in &game.currentTilemap.objects {
+		objectRect := multiply_sdl_rect(object, game.currentOutputTileSize);
 		if sdl.HasIntersection(&worldPositionRect, &objectRect) {
 			worldPosition.y -= velocity.y * deltaTime;
 			velocity.y = 0;
@@ -241,8 +243,8 @@ update_character_position :: proc(using character: ^Character, deltaTime: f64) {
 		}
 	}
 
-	worldPosition.x = clamp(worldPosition.x, dimensions.x / 2.0, game.tilemap.numberOfTiles.x - (dimensions.x / 2.0));
-	worldPosition.y = clamp(worldPosition.y, dimensions.y / 2.0, game.tilemap.numberOfTiles.y - (dimensions.y / 2.0));
+	worldPosition.x = clamp(worldPosition.x, dimensions.x / 2.0, game.currentTilemap.numberOfTiles.x - (dimensions.x / 2.0));
+	worldPosition.y = clamp(worldPosition.y, dimensions.y / 2.0, game.currentTilemap.numberOfTiles.y - (dimensions.y / 2.0));
 }
 
 update_character_texture :: proc(using character: ^Character, deltaTime: f64) {
@@ -263,10 +265,10 @@ update_character_texture :: proc(using character: ^Character, deltaTime: f64) {
 }
 
 draw_player :: proc(using player: ^Player, viewOffset: Vector2) {
-	draw_spritesheet(player.currentSpritesheet, (player.worldPosition - viewOffset) * OUTPUT_TILE_SIZE);
+	draw_spritesheet(player.currentSpritesheet, (player.worldPosition - viewOffset) * game.currentOutputTileSize);
 
 	for bullet in activeBullets {
-		draw_spritesheet(bullet.spritesheet, (bullet.worldPosition - viewOffset) * OUTPUT_TILE_SIZE);
+		draw_spritesheet(bullet.spritesheet, (bullet.worldPosition - viewOffset) * game.currentOutputTileSize);
 	}
 }
 
@@ -344,9 +346,9 @@ draw_character_health_bar :: proc(using character: ^Character, viewOffset: Vecto
 	} else {
 		if health < 1.0 {
 			fullHealthBarRect: sdl.Rect = {
-				i32((worldPosition.x - viewOffset.x - (dimensions.x / 2)) * OUTPUT_TILE_SIZE.x),
-				i32(((worldPosition.y - viewOffset.y - (dimensions.y / 2)) * OUTPUT_TILE_SIZE.y) - (ZOMBIE_HEALTH_BAR_HEIGHT * 2)),
-				i32(dimensions.x * OUTPUT_TILE_SIZE.x),
+				i32((worldPosition.x - viewOffset.x - (dimensions.x / 2)) * game.currentOutputTileSize.x),
+				i32(((worldPosition.y - viewOffset.y - (dimensions.y / 2)) * game.currentOutputTileSize.y) - (ZOMBIE_HEALTH_BAR_HEIGHT * 2)),
+				i32(dimensions.x * game.currentOutputTileSize.x),
 				i32(ZOMBIE_HEALTH_BAR_HEIGHT),
 			}
 

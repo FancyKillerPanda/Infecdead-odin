@@ -6,7 +6,7 @@ import "core:time"
 
 import sdl "vendor:sdl2"
 
-OUTPUT_TILE_SIZE: Vector2 : { 32, 32 };
+OUTSIDE_OUTPUT_TILE_SIZE: Vector2 : { 32, 32 };
 MINIMAP_TILE_SIZE: Vector2 : { 2, 2 };
 
 Game :: struct {
@@ -15,6 +15,7 @@ Game :: struct {
 
 	screenDimensions: Vector2,
 	currentWorldDimensions: Vector2,
+	currentOutputTileSize: Vector2,
 
 	window: ^sdl.Window,
 	renderer: ^sdl.Renderer,
@@ -24,8 +25,10 @@ Game :: struct {
 	gameWon: bool,
 	gameOverScreen: GameOverScreen,
 	
+	currentTilemap: ^Tilemap,
+	outsideTilemap: ^Tilemap,
+
 	player: Player,
-	tilemap: Tilemap,
 	zombies: [dynamic] Zombie,
 	chests: [dynamic] Chest,
 	
@@ -53,8 +56,10 @@ GameState :: enum {
 init_game :: proc(using game: ^Game) -> bool {
 	create_window(game) or_return;
 	
-	tilemap = parse_tilemap(game) or_return;
-	game.currentWorldDimensions = tilemap.numberOfTiles;
+	outsideTilemap = new(Tilemap);
+	outsideTilemap^ = parse_tilemap(game, MAP_OUTSIDE_DATA) or_return;
+
+	set_current_map(game, outsideTilemap);
 
 	menu = create_menu(game);
 	gameOverScreen = create_game_over_screen(game);
@@ -74,10 +79,11 @@ init_game :: proc(using game: ^Game) -> bool {
 }
 
 reset_game :: proc(using game: ^Game) {
+	set_current_map(game, outsideTilemap);
+	
 	player = create_player(game);
-	spawn_entities(&tilemap);
-	spawn_chests(&tilemap);
-
+	spawn_entities(currentTilemap);
+	spawn_chests(currentTilemap);
 	
 	hostagesSaved = 0;
 	hostagesLeft = u32(len(hostages));
@@ -177,7 +183,7 @@ update_game :: proc(using game: ^Game, deltaTime: f64) {
 		update_chests(game);
 		
 		// The view offset (basically a camera) tracks the player
-		tilesOnScreen := game.screenDimensions / OUTPUT_TILE_SIZE;
+		tilesOnScreen := game.screenDimensions / currentOutputTileSize;
 		viewOffset = player.worldPosition - (tilesOnScreen / 2.0);
 
 		if viewOffset.x < 0.0 do viewOffset.x = 0.0;
@@ -215,7 +221,7 @@ draw_game :: proc(using game: ^Game) {
 }
 
 draw_gameplay :: proc(using game: ^Game) {
-	draw_tilemap_first_pass(&tilemap, OUTPUT_TILE_SIZE, viewOffset);
+	draw_tilemap_first_pass(currentTilemap, currentOutputTileSize, viewOffset);
 	draw_chests(game, viewOffset);
 	draw_player(&player, viewOffset);
 	
@@ -227,9 +233,9 @@ draw_gameplay :: proc(using game: ^Game) {
 		draw_hostage(&hostage, viewOffset);
 	}
 	
-	draw_tilemap_second_pass(&tilemap, OUTPUT_TILE_SIZE, viewOffset);
+	draw_tilemap_second_pass(currentTilemap, currentOutputTileSize, viewOffset);
 
-	draw_minimap(&tilemap);
+	draw_minimap(currentTilemap);
 	draw_inventory_slots(game);
 	draw_chests_inventory_slots(game, viewOffset);
 	draw_character_health_bar(&player, 0);
@@ -287,6 +293,17 @@ draw_number_of_hostages_left :: proc(using game: ^Game) {
 
 	draw_text(&hostagesProgressText, { (screenDimensions.x * 4 / 100) + (f64(hostagesProgressText.rect.w) / 2),
 									   (screenDimensions.y * 8 / 100) + (f64(hostagesProgressText.rect.h))})
+}
+
+set_current_map :: proc(using game: ^Game, tilemap: ^Tilemap) {
+	currentTilemap = tilemap;
+	currentWorldDimensions = currentTilemap.numberOfTiles;
+
+	if tilemap == outsideTilemap {
+		currentOutputTileSize = OUTSIDE_OUTPUT_TILE_SIZE;
+	} else {
+		assert(false, "Unknown tilemap.");
+	}
 }
 
 create_window :: proc(game: ^Game) -> (success: bool) {

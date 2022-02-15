@@ -28,7 +28,7 @@ create_hostage :: proc(game: ^Game, position: Vector2) -> (hostage: Hostage) {
 	hostageTextureIndex := rand.uint32() % 3;
 	
 	hostage.walkSpritesheet = new(Spritesheet);
-	init_spritesheet(hostage.walkSpritesheet, game.renderer, HOSTAGE_TEXTURES[hostageTextureIndex], hostage.dimensions * OUTPUT_TILE_SIZE, { 16, 16 }, 32, 4, nil, 0);
+	init_spritesheet(hostage.walkSpritesheet, game.renderer, HOSTAGE_TEXTURES[hostageTextureIndex], hostage.dimensions * game.currentOutputTileSize, { 16, 16 }, 32, 4, nil, 0);
 	hostage.currentSpritesheet = hostage.walkSpritesheet;
 
 	return;
@@ -85,8 +85,8 @@ update_hostage :: proc(using hostage: ^Hostage, hostageIndex: int, deltaTime: f6
 	// Updates position and does collision checking
 	update_character_position(hostage, deltaTime);
 
-	worldRect := multiply_sdl_rect(get_character_world_rect(hostage), OUTPUT_TILE_SIZE);
-	collectionRect := multiply_sdl_rect(game.tilemap.hostageCollectionRect, OUTPUT_TILE_SIZE);
+	worldRect := multiply_sdl_rect(get_character_world_rect(hostage), game.currentOutputTileSize);
+	collectionRect := multiply_sdl_rect(game.currentTilemap.hostageCollectionRect, game.currentOutputTileSize);
 	if sdl.HasIntersection(&worldRect, &collectionRect) {
 		game.hostagesSaved += 1;
 		game.hostagesLeft -= 1;
@@ -111,6 +111,6 @@ update_hostage :: proc(using hostage: ^Hostage, hostageIndex: int, deltaTime: f6
 }
 
 draw_hostage :: proc(using hostage: ^Hostage, viewOffset: Vector2) {
-	draw_spritesheet(currentSpritesheet, (worldPosition - viewOffset) * OUTPUT_TILE_SIZE);
+	draw_spritesheet(currentSpritesheet, (worldPosition - viewOffset) * game.currentOutputTileSize);
 	draw_character_health_bar(hostage, viewOffset);
 }

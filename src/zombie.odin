@@ -25,7 +25,7 @@ create_zombie :: proc(game: ^Game, position: Vector2) -> (zombie: Zombie) {
 	zombie.type = .Zombie;
 	
 	zombie.walkSpritesheet = new(Spritesheet);
-	init_spritesheet(zombie.walkSpritesheet, game.renderer, ZOMBIE_PNG_DATA, zombie.dimensions * OUTPUT_TILE_SIZE, { 16, 16 }, 64, 8, nil, 0);
+	init_spritesheet(zombie.walkSpritesheet, game.renderer, ZOMBIE_PNG_DATA, zombie.dimensions * game.currentOutputTileSize, { 16, 16 }, 64, 8, nil, 0);
 	zombie.currentSpritesheet = zombie.walkSpritesheet;
 
 	return;
@@ -72,8 +72,8 @@ update_zombie :: proc(using zombie: ^Zombie, deltaTime: f64) {
 	
 	// Checks for collision with player
 	timeSinceLastDamageDealt += deltaTime;
-	worldPositionRect := multiply_sdl_rect(get_character_world_rect(zombie), OUTPUT_TILE_SIZE);
-	playerRect := multiply_sdl_rect(get_character_world_rect(&game.player), OUTPUT_TILE_SIZE);
+	worldPositionRect := multiply_sdl_rect(get_character_world_rect(zombie), game.currentOutputTileSize);
+	playerRect := multiply_sdl_rect(get_character_world_rect(&game.player), game.currentOutputTileSize);
 
 	if timeSinceLastDamageDealt >= ZOMBIE_DAMAGE_COOLDOWN && sdl.HasIntersection(&worldPositionRect, &playerRect) {
 		timeSinceLastDamageDealt = 0;
@@ -85,7 +85,7 @@ update_zombie :: proc(using zombie: ^Zombie, deltaTime: f64) {
 }
 
 draw_zombie :: proc(using zombie: ^Zombie, viewOffset: Vector2) {
-	draw_spritesheet(currentSpritesheet, (worldPosition - viewOffset) * OUTPUT_TILE_SIZE);
+	draw_spritesheet(currentSpritesheet, (worldPosition - viewOffset) * game.currentOutputTileSize);
 	draw_character_health_bar(zombie, viewOffset);
 }
 

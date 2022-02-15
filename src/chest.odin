@@ -12,9 +12,9 @@ chestSpritesheet: Spritesheet;
 chestContentsIconBackground: Spritesheet;
 
 init_chests :: proc(game: ^Game) {
-	init_spritesheet(&chestSpritesheet, game.renderer, CHEST_PNG_DATA, OUTPUT_TILE_SIZE, { 16, 16 }, 2, 2, nil, 0);
+	init_spritesheet(&chestSpritesheet, game.renderer, CHEST_PNG_DATA, game.currentOutputTileSize, { 16, 16 }, 2, 2, nil, 0);
 	init_spritesheet(&chestContentsIconBackground, game.renderer, CHEST_CONTENTS_ICON_BACKGROUND_DATA, { 0, 0 }, { 0, 0 }, 1, 1, nil, 0);
-	spawn_chests(&game.tilemap);
+	spawn_chests(game.currentTilemap);
 }
 
 update_chests :: proc(using game: ^Game) {
@@ -41,14 +41,14 @@ update_chests :: proc(using game: ^Game) {
 draw_chests :: proc(game: ^Game, viewOffset: Vector2) {
 	for chest in &game.chests {
 		spritesheet_set_frame(&chestSpritesheet, u32(chest.isOpen));
-		draw_spritesheet(&chestSpritesheet, (chest.worldPosition - viewOffset) * OUTPUT_TILE_SIZE);
+		draw_spritesheet(&chestSpritesheet, (chest.worldPosition - viewOffset) * game.currentOutputTileSize);
 	}
 }
 
 draw_chests_inventory_slots :: proc(game: ^Game, viewOffset: Vector2) {
 	for chest in &game.chests {
 		if chest.isOpen {
-			iconPosition := (chest.worldPosition - viewOffset) * OUTPUT_TILE_SIZE;
+			iconPosition := (chest.worldPosition - viewOffset) * game.currentOutputTileSize;
 			iconPosition.y -= chestContentsIconBackground.outputSize.y * 2 / 3; // For some spacing
 
 			draw_spritesheet(&chestContentsIconBackground, iconPosition);
