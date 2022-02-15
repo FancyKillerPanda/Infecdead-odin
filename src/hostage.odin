@@ -111,6 +111,6 @@ update_hostage :: proc(using hostage: ^Hostage, hostageIndex: int, deltaTime: f6
 }
 
 draw_hostage :: proc(using hostage: ^Hostage, viewOffset: Vector2) {
-	draw_spritesheet(currentSpritesheet, (worldPosition - viewOffset) * game.currentOutputTileSize);
+	draw_spritesheet(currentSpritesheet, game.currentTilemapOutputPosition + ((worldPosition - viewOffset) * game.currentOutputTileSize));
 	draw_character_health_bar(hostage, viewOffset);
 }

@@ -17,6 +17,7 @@ Game :: struct {
 	screenDimensions: Vector2,
 	currentWorldDimensions: Vector2,
 	currentOutputTileSize: Vector2,
+	currentTilemapOutputPosition: Vector2,
 
 	window: ^sdl.Window,
 	renderer: ^sdl.Renderer,
@@ -188,9 +189,7 @@ update_game :: proc(using game: ^Game, deltaTime: f64) {
 		update_chests(game);
 		
 		// The view offset (basically a camera) tracks the player
-		tilesOnScreen := screenDimensions / currentOutputTileSize;
-		tilesOnScreen.x = clamp(tilesOnScreen.x, 0, currentTilemap.numberOfTiles.x);
-		tilesOnScreen.y = clamp(tilesOnScreen.y, 0, currentTilemap.numberOfTiles.y);
+		tilesOnScreen := get_number_of_tiles_on_screen(currentTilemap, 0);
 		
 		viewOffset = player.worldPosition - (tilesOnScreen / 2.0);
 		viewOffset.x = clamp(viewOffset.x, 0, currentWorldDimensions.x - tilesOnScreen.x);
@@ -199,7 +198,7 @@ update_game :: proc(using game: ^Game, deltaTime: f64) {
 }
 
 draw_game :: proc(using game: ^Game) {
-	sdl.SetRenderDrawColor(renderer, 192, 192, 192, 255);
+	sdl.SetRenderDrawColor(renderer, 0, 0, 0, 255);
 	sdl.RenderClear(renderer);
 	
 	switch state {
@@ -220,7 +219,7 @@ draw_game :: proc(using game: ^Game) {
 }
 
 draw_gameplay :: proc(using game: ^Game) {
-	draw_tilemap_first_pass(currentTilemap, currentOutputTileSize, viewOffset);
+	draw_tilemap_first_pass(currentTilemap, viewOffset);
 	draw_chests(game, viewOffset);
 	draw_player(&player, viewOffset);
 	
@@ -232,7 +231,7 @@ draw_gameplay :: proc(using game: ^Game) {
 		draw_hostage(&hostage, viewOffset);
 	}
 	
-	draw_tilemap_second_pass(currentTilemap, currentOutputTileSize, viewOffset);
+	draw_tilemap_second_pass(currentTilemap, viewOffset);
 
 	draw_minimap(currentTilemap);
 	draw_inventory_slots(game);
@@ -300,8 +299,10 @@ set_current_map :: proc(using game: ^Game, tilemap: ^Tilemap) {
 
 	if tilemap == outsideTilemap {
 		currentOutputTileSize = OUTSIDE_OUTPUT_TILE_SIZE;
+		currentTilemapOutputPosition = 0;
 	} else if tilemap == townHallTilemap {
 		currentOutputTileSize = TOWN_HALL_OUTPUT_TILE_SIZE;
+		currentTilemapOutputPosition = (screenDimensions / 2) - ((get_number_of_tiles_on_screen(currentTilemap, 0) * currentOutputTileSize) / 2);
 	} else {
 		assert(false, "Unknown tilemap.");
 	}

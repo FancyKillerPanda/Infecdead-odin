@@ -85,8 +85,6 @@ update_zombie :: proc(using zombie: ^Zombie, deltaTime: f64) {
 }
 
 draw_zombie :: proc(using zombie: ^Zombie, viewOffset: Vector2) {
-	draw_spritesheet(currentSpritesheet, (worldPosition - viewOffset) * game.currentOutputTileSize);
+	draw_spritesheet(currentSpritesheet, game.currentTilemapOutputPosition + ((worldPosition - viewOffset) * game.currentOutputTileSize));
 	draw_character_health_bar(zombie, viewOffset);
 }
-
-

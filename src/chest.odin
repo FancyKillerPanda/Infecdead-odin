@@ -41,14 +41,14 @@ update_chests :: proc(using game: ^Game) {
 draw_chests :: proc(game: ^Game, viewOffset: Vector2) {
 	for chest in &game.chests {
 		spritesheet_set_frame(&chestSpritesheet, u32(chest.isOpen));
-		draw_spritesheet(&chestSpritesheet, (chest.worldPosition - viewOffset) * game.currentOutputTileSize);
+		draw_spritesheet(&chestSpritesheet, game.currentTilemapOutputPosition + ((chest.worldPosition - viewOffset) * game.currentOutputTileSize));
 	}
 }
 
 draw_chests_inventory_slots :: proc(game: ^Game, viewOffset: Vector2) {
 	for chest in &game.chests {
 		if chest.isOpen {
-			iconPosition := (chest.worldPosition - viewOffset) * game.currentOutputTileSize;
+			iconPosition := game.currentTilemapOutputPosition + ((chest.worldPosition - viewOffset) * game.currentOutputTileSize);
 			iconPosition.y -= chestContentsIconBackground.outputSize.y * 2 / 3; // For some spacing
 
 			draw_spritesheet(&chestContentsIconBackground, iconPosition);

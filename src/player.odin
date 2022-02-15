@@ -265,10 +265,10 @@ update_character_texture :: proc(using character: ^Character, deltaTime: f64) {
 }
 
 draw_player :: proc(using player: ^Player, viewOffset: Vector2) {
-	draw_spritesheet(player.currentSpritesheet, (player.worldPosition - viewOffset) * game.currentOutputTileSize);
+	draw_spritesheet(player.currentSpritesheet, game.currentTilemapOutputPosition + ((player.worldPosition - viewOffset) * game.currentOutputTileSize));
 
 	for bullet in activeBullets {
-		draw_spritesheet(bullet.spritesheet, (bullet.worldPosition - viewOffset) * game.currentOutputTileSize);
+		draw_spritesheet(bullet.spritesheet, game.currentTilemapOutputPosition + ((bullet.worldPosition - viewOffset) * game.currentOutputTileSize));
 	}
 }
 
@@ -346,8 +346,8 @@ draw_character_health_bar :: proc(using character: ^Character, viewOffset: Vecto
 	} else {
 		if health < 1.0 {
 			fullHealthBarRect: sdl.Rect = {
-				i32((worldPosition.x - viewOffset.x - (dimensions.x / 2)) * game.currentOutputTileSize.x),
-				i32(((worldPosition.y - viewOffset.y - (dimensions.y / 2)) * game.currentOutputTileSize.y) - (ZOMBIE_HEALTH_BAR_HEIGHT * 2)),
+				i32(game.currentTilemapOutputPosition.x + ((worldPosition.x - viewOffset.x - (dimensions.x / 2)) * game.currentOutputTileSize.x)),
+				i32(game.currentTilemapOutputPosition.y + ((worldPosition.y - viewOffset.y - (dimensions.y / 2)) * game.currentOutputTileSize.y) - (ZOMBIE_HEALTH_BAR_HEIGHT * 2)),
 				i32(dimensions.x * game.currentOutputTileSize.x),
 				i32(ZOMBIE_HEALTH_BAR_HEIGHT),
 			}

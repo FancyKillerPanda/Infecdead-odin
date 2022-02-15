@@ -220,12 +220,12 @@ parse_tileset :: proc(tilemap: ^Tilemap, data: [] u8, imageData: [] u8) -> (succ
 	return;
 }
 
-draw_tilemap_first_pass :: proc(using tilemap: ^Tilemap, tileSize: Vector2, viewOffset: Vector2) {
-	draw_tilemap(tilemap, 0, 0, tileSize, viewOffset, false);
+draw_tilemap_first_pass :: proc(using tilemap: ^Tilemap, viewOffset: Vector2) {
+	draw_tilemap(tilemap, 0, game.currentTilemapOutputPosition, game.currentOutputTileSize, viewOffset, false);
 }
 
-draw_tilemap_second_pass :: proc(using tilemap: ^Tilemap, tileSize: Vector2, viewOffset: Vector2) {
-	draw_tilemap(tilemap, 1, 0, tileSize, viewOffset, false);
+draw_tilemap_second_pass :: proc(using tilemap: ^Tilemap, viewOffset: Vector2) {
+	draw_tilemap(tilemap, 1, game.currentTilemapOutputPosition, game.currentOutputTileSize, viewOffset, false);
 }
 
 draw_minimap :: proc(using tilemap: ^Tilemap) {
@@ -254,9 +254,7 @@ draw_tilemap :: proc(using tilemap: ^Tilemap, pass: u32, outputPosition: Vector2
 		textureRect = create_sdl_rect(0, numberOfTiles * TILEMAP_INTERNAL_TILE_SIZE);
 		outputRect = create_sdl_rect(outputPosition, numberOfTiles * outputTileDimensions); 
 	} else {
-		numberOfTilesOnScreen := game.screenDimensions / outputTileDimensions;
-		numberOfTilesOnScreen.x = clamp(numberOfTilesOnScreen.x, 0, numberOfTiles.x - viewOffset.x);
-		numberOfTilesOnScreen.y = clamp(numberOfTilesOnScreen.y, 0, numberOfTiles.y - viewOffset.y);
+		numberOfTilesOnScreen := get_number_of_tiles_on_screen(tilemap, viewOffset);
 
 		textureRect = create_sdl_rect(viewOffset * TILEMAP_INTERNAL_TILE_SIZE, numberOfTilesOnScreen * TILEMAP_INTERNAL_TILE_SIZE);
 		outputRect = create_sdl_rect(outputPosition, numberOfTilesOnScreen * outputTileDimensions);
@@ -309,6 +307,14 @@ advance_position :: proc(currentRow: ^i32, currentColumn: ^i32, tilemap: ^Tilema
 		currentColumn^ -= i32(tilemap.numberOfTiles.x);
 		currentRow^ += 1;
 	}
+}
+
+get_number_of_tiles_on_screen :: proc(using tilemap: ^Tilemap, viewOffset: Vector2) -> (numberOfTilesOnScreen: Vector2) {
+	numberOfTilesOnScreen = game.screenDimensions / game.currentOutputTileSize;
+	numberOfTilesOnScreen.x = clamp(numberOfTilesOnScreen.x, 0, numberOfTiles.x - viewOffset.x);
+	numberOfTilesOnScreen.y = clamp(numberOfTilesOnScreen.y, 0, numberOfTiles.y - viewOffset.y);
+
+	return;
 }
 
 // This function will spawn zombies and other characters, but only set the location
