@@ -110,6 +110,17 @@
                  "width":384,
                  "x":0,
                  "y":0
+                }, 
+                {
+                 "height":32,
+                 "id":14,
+                 "name":"Town Hall Door",
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":32,
+                 "x":176,
+                 "y":144
                 }],
          "opacity":1,
          "type":"objectgroup",
@@ -141,7 +152,7 @@
          "y":0
         }],
  "nextlayerid":10,
- "nextobjectid":11,
+ "nextobjectid":15,
  "orientation":"orthogonal",
  "renderorder":"right-down",
  "tiledversion":"1.7.2",

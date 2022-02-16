@@ -64,11 +64,12 @@ init_game :: proc(using game: ^Game) -> bool {
 	townHallTilemap = new(Tilemap);
 	townHallTilemap^ = parse_tilemap(game, MAP_TOWN_HALL_DATA) or_return;
 
-	set_current_map(game, outsideTilemap);
-
 	menu = create_menu(game);
 	gameOverScreen = create_game_over_screen(game);
 	
+	set_current_map(game, outsideTilemap);
+	player = create_player(game);
+
 	init_chests(game);
 	
 	init_spritesheet(&inventorySlotBackground, renderer, INVENTORY_SLOT_BACKGROUND_DATA, { 0, 0 }, { 0, 0 }, 1, 1, nil, 0);
@@ -86,10 +87,6 @@ init_game :: proc(using game: ^Game) -> bool {
 reset_game :: proc(using game: ^Game) {
 	set_current_map(game, townHallTilemap);
 	// set_current_map(game, outsideTilemap);
-	
-	player = create_player(game);
-	spawn_entities(currentTilemap);
-	spawn_chests(currentTilemap);
 	
 	hostagesSaved = 0;
 	hostagesLeft = u32(len(hostages));
@@ -309,6 +306,10 @@ set_current_map :: proc(using game: ^Game, tilemap: ^Tilemap) {
 	} else {
 		assert(false, "Unknown tilemap.");
 	}
+
+	init_character(game, &player, 0);
+	spawn_entities(currentTilemap);
+	spawn_chests(currentTilemap);
 }
 
 create_window :: proc(game: ^Game) -> (success: bool) {

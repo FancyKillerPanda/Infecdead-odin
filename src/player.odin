@@ -92,6 +92,11 @@ init_character :: proc(game: ^Game, character: ^Character, position: Vector2) {
 	character.dimensions = get_game_data(game).characterDimensions / game.currentOutputTileSize;
 	character.worldPosition = position;
 	character.health = 1.0;
+
+	// character.rotation = 0; // TODO(fkp): Pass in
+
+	character.velocity = 0;
+	character.acceleration = 0;
 }
 
 handle_player_events :: proc(using player: ^Player, event: ^sdl.Event) {
@@ -250,7 +255,7 @@ update_character_texture :: proc(using character: ^Character, deltaTime: f64) {
 }
 
 draw_player :: proc(using player: ^Player, viewOffset: Vector2) {
-	draw_spritesheet(player.currentSpritesheet, game.currentTilemapOutputPosition + ((player.worldPosition - viewOffset) * game.currentOutputTileSize));
+	draw_spritesheet(player.currentSpritesheet, game.currentTilemapOutputPosition + ((player.worldPosition - viewOffset) * game.currentOutputTileSize), get_game_data(game).characterDimensions);
 
 	for bullet in activeBullets {
 		draw_spritesheet(bullet.spritesheet, game.currentTilemapOutputPosition + ((bullet.worldPosition - viewOffset) * game.currentOutputTileSize));
@@ -386,6 +391,21 @@ take_damage :: proc(using player: ^Player, damage: f64) {
 }
 
 use_item :: proc(using player: ^Player) {
+	playerRect := get_character_world_rect_multiplied(player, game.currentOutputTileSize);
+	for door in game.currentTilemap.doors {
+		doorRect := multiply_sdl_rect(door, game.currentOutputTileSize);
+		if sdl.HasIntersection(&doorRect, &playerRect) {
+			// TODO(fkp): Do this based on information from the tilemap itself
+			if game.currentTilemap == game.outsideTilemap {
+				set_current_map(game, game.townHallTilemap);
+			} else {
+				set_current_map(game, game.outsideTilemap);
+			}
+
+			return;
+		}
+	}
+	
 	for chest in game.chests {
 		if chest.isOpen {
 			swap_current_slot_with_chest(player);

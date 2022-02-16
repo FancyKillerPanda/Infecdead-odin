@@ -74,7 +74,11 @@ update_spritesheet :: proc(using spritesheet: ^Spritesheet, deltaTime: f64) {
 	}
 }
 
-draw_spritesheet :: proc(using spritesheet: ^Spritesheet, position: Vector2, rotation: f64 = 0, horizontalFlip := false, verticalFlip := false) {
+draw_spritesheet :: proc(using spritesheet: ^Spritesheet, position: Vector2, size: Vector2 = { 0, 0 }, rotation: f64 = 0, horizontalFlip := false, verticalFlip := false) {
+	if size != 0 {
+		outputSize = size;
+	}
+	
 	rect := create_sdl_rect(position - (outputSize / 2), outputSize);
 	subrect: sdl.Rect;
 

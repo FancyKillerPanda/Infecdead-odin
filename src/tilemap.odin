@@ -24,6 +24,7 @@ Tilemap :: struct {
 	
 	objects: [dynamic] sdl.Rect,
 	spawnPoints: [dynamic] SpawnPoint,
+	doors: [dynamic] sdl.Rect,
 	hostageCollectionRect: sdl.Rect,
 
 	// Caches the rendered output
@@ -151,6 +152,8 @@ add_collisions_layer :: proc(using tilemap: ^Tilemap, layer: json.Object) {
 		
 		if valueObj["name"].(json.String) == "Hostage Collection" {
 			hostageCollectionRect = objectRect;
+		} else if valueObj["name"].(json.String) == "Town Hall Door" {
+			append(&doors, objectRect);
 		} else {
 			append(&objects, objectRect);
 		}
@@ -168,7 +171,7 @@ add_spawn_points :: proc(using tilemap: ^Tilemap, layer: json.Object) {
 		properties: map[string] string;
 		
 		switch value.(json.Object)["name"].(json.String) {
-			case "Player":entityType = .Player;
+			case "Player": entityType = .Player;
 			case "Zombie": entityType = .Zombie;
 			case "Hostage": entityType = .Hostage;
 			
