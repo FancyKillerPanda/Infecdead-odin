@@ -17,6 +17,7 @@ MAP_TOWN_HALL_DATA :: #load("../res/maps/town_hall.json");
 PISTOL_BULLET_PNG_DATA :: #load("../res/objects/pistol_bullet.png");
 CHEST_PNG_DATA :: #load("../res/objects/chest.png");
 
+DIALOGUE_BOX_BACKGROUND_DATA :: #load("../res/ui/dialogue_box_background.png");
 INVENTORY_SLOT_BACKGROUND_DATA :: #load("../res/ui/inventory_slot_background.png");
 INVENTORY_SLOT_BACKGROUND_SELECTED_DATA :: #load("../res/ui/inventory_slot_background_selected.png");
 CHEST_CONTENTS_ICON_BACKGROUND_DATA :: #load("../res/ui/chest_contents_icon_background.png");

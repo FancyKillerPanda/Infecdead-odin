@@ -47,6 +47,8 @@ Game :: struct {
 	pistolIcon: Spritesheet,
 	medKitIcon: Spritesheet,
 	hostageIcon: Spritesheet,
+
+	dialogueBoxWithAssistant: DialogueBox,
 }
 
 GameState :: enum {
@@ -78,6 +80,8 @@ init_game :: proc(using game: ^Game) -> bool {
 	init_spritesheet(&medKitIcon, renderer, MED_KIT_ICON_PNG_DATA, { 0, 0 }, { 0, 0 }, 1, 1, nil, 0);
 	init_spritesheet(&hostageIcon, renderer, HOSTAGE_ICON_PNG_DATA, { 0, 0 }, { 0, 0 }, 1, 1, nil, 0);
 
+	dialogueBoxWithAssistant = create_dialogue_box(game, { create_dialogue_item(game, "What would you like to do?", { "> Fight", "> Flight" }) }, true);
+	
 	running = true;
 	state = .Menu;
 	
@@ -238,6 +242,10 @@ draw_gameplay :: proc(using game: ^Game) {
 	draw_chests_inventory_slots(game, viewOffset);
 	draw_character_health_bar(&player, 0);
 	draw_number_of_hostages_left(game);
+
+	if dialogueBoxWithAssistant.isActive {
+		draw_dialogue_box(&dialogueBoxWithAssistant);
+	}
 }
 
 draw_paused :: proc(using game: ^Game) {
