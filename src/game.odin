@@ -157,21 +157,6 @@ handle_events :: proc(using game: ^Game) {
 
 			case .KEYUP:
 				keysPressed[event.key.keysym.scancode] = false;
-
-			case .MOUSEMOTION:
-				if dialogueBoxWithAssistant.isActive {
-					button_group_handle_mouse_motion(&dialogueBoxWithAssistant.items[dialogueBoxWithAssistant.currentItemIndex].options, &event);
-				}
-			
-			case .MOUSEBUTTONDOWN:
-				if dialogueBoxWithAssistant.isActive {
-					button_group_handle_mouse_down(&dialogueBoxWithAssistant.items[dialogueBoxWithAssistant.currentItemIndex].options, &event);
-				}
-			
-			case .MOUSEBUTTONUP:
-				if dialogueBoxWithAssistant.isActive {
-					button_group_handle_mouse_up(&dialogueBoxWithAssistant.items[dialogueBoxWithAssistant.currentItemIndex].options, &event);
-				}
 		}
 
 		#partial switch state {
@@ -180,6 +165,10 @@ handle_events :: proc(using game: ^Game) {
 
 			case .Playing:
 				handle_player_events(&player, &event);
+
+				if dialogueBoxWithAssistant.isActive {
+					button_group_handle_event(&dialogueBoxWithAssistant.items[dialogueBoxWithAssistant.currentItemIndex].options, &event);
+				}
 
 			case .GameOver:
 				handle_game_over_events(&gameOverScreen, &event);

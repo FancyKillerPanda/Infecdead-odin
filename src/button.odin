@@ -54,6 +54,22 @@ set_button_group_colours :: proc(buttonGroup: ^ButtonGroup, baseColour: sdl.Colo
 	buttonGroup.pressedColour = pressedColour;
 }
 
+button_group_handle_event :: proc(using buttonGroup: ^ButtonGroup, event: ^sdl.Event) -> i32 {
+	#partial switch event.type {
+		case .MOUSEMOTION:
+			button_group_handle_mouse_motion(buttonGroup, event);
+
+		case .MOUSEBUTTONDOWN:
+			button_group_handle_mouse_down(buttonGroup, event);
+			
+		case .MOUSEBUTTONUP:
+			return button_group_handle_mouse_up(buttonGroup, event);
+	}
+
+	return -1;
+}
+
+@(private = "file")
 button_group_handle_mouse_motion :: proc(using buttonGroup: ^ButtonGroup, event: ^sdl.Event) {
 	mouseRect: sdl.Rect = { event.motion.x, event.motion.y, 1, 1 };
 
@@ -74,6 +90,7 @@ button_group_handle_mouse_motion :: proc(using buttonGroup: ^ButtonGroup, event:
 	}
 }
 
+@(private = "file")
 button_group_handle_mouse_down :: proc(using buttonGroup: ^ButtonGroup, event: ^sdl.Event) {
 	mouseRect: sdl.Rect = { event.button.x, event.button.y, 1, 1 };
 
@@ -88,6 +105,7 @@ button_group_handle_mouse_down :: proc(using buttonGroup: ^ButtonGroup, event: ^
 	}
 }
 
+@(private = "file")
 button_group_handle_mouse_up :: proc(using buttonGroup: ^ButtonGroup, event: ^sdl.Event) -> i32 {
 	if active == -1 {
 		return -1;

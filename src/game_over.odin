@@ -50,21 +50,12 @@ handle_game_over_events :: proc(using gameOverScreen: ^GameOverScreen, event: ^s
 		menu = &gameOverLostMenu;
 	}
 	
-	#partial switch event.type {
-		case .MOUSEMOTION:
-			button_group_handle_mouse_motion(menu, event);
-		
-		case.MOUSEBUTTONDOWN:
-			button_group_handle_mouse_down(menu, event);
-
-		case .MOUSEBUTTONUP:
-			result := button_group_handle_mouse_up(menu, event);
-			if result == 0 {
-				reset_game(game);
-				game.state = .Playing;
-			} else if result == 1 {
-				game.state = .Menu;
-			}
+	result := button_group_handle_event(menu, event);
+	if result == 0 {
+		reset_game(game);
+		game.state = .Playing;
+	} else if result == 1 {
+		game.state = .Menu;
 	}
 }
 

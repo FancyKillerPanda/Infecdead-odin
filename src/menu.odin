@@ -96,65 +96,44 @@ create_menu :: proc(game: ^Game) -> (menu: Menu) {
 }
 
 handle_menu_events :: proc(using menu: ^Menu, event: ^sdl.Event) {
-	#partial switch event.type {
-		case .MOUSEMOTION:
-			if currentButtonGroup != nil {
-				button_group_handle_mouse_motion(currentButtonGroup, event);
-			}
-		
-			if state != .Home {
-				button_group_handle_mouse_motion(&backButton, event);
-			}
+	result: i32 = -1;
+	if currentButtonGroup != nil {
+		result = button_group_handle_event(currentButtonGroup, event);
+	}
 
-		case .MOUSEBUTTONDOWN:
-			if currentButtonGroup != nil {
-				button_group_handle_mouse_down(currentButtonGroup, event);
-			}
+	if result != -1 {
+		#partial switch state {
+			case .Home:
+				switch result {
+					case 0:
+						state = .ProfileSelection;
+						currentButtonGroup = profileSelectionButtons;
 
-			if state != .Home {
-				button_group_handle_mouse_down(&backButton, event);
-			}
+					case 1:
+						state = .Help;
+						currentButtonGroup = nil;
 
-		case .MOUSEBUTTONUP:
-			result: i32 = -1;
-			if currentButtonGroup != nil {
-				result = button_group_handle_mouse_up(currentButtonGroup, event);
-			}
-
-			if result != -1 {
-				#partial switch state {
-					case .Home:
-						switch result {
-							case 0:
-								state = .ProfileSelection;
-								currentButtonGroup = profileSelectionButtons;
-
-							case 1:
-								state = .Help;
-								currentButtonGroup = nil;
-
-							case 2:
-								state = .Options;
-								currentButtonGroup = nil;
-							
-							case 3:
-								state = .About;
-								currentButtonGroup = nil;
-						}
+					case 2:
+						state = .Options;
+						currentButtonGroup = nil;
 					
-					case .ProfileSelection:
-						game.state = .Playing;
-						reset_game(game);
+					case 3:
+						state = .About;
+						currentButtonGroup = nil;
 				}
-			}
 			
-			if state != .Home {
-				result = button_group_handle_mouse_up(&backButton, event);
-				if result != -1 {
-					state = .Home;
-					currentButtonGroup = homeButtons;
-				}
-			}
+			case .ProfileSelection:
+				game.state = .Playing;
+				reset_game(game);
+		}
+	}
+	
+	if state != .Home {
+		result = button_group_handle_event(&backButton, event);
+		if result != -1 {
+			state = .Home;
+			currentButtonGroup = homeButtons;
+		}
 	}
 }
 
