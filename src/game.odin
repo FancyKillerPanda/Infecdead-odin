@@ -80,7 +80,7 @@ init_game :: proc(using game: ^Game) -> bool {
 	init_spritesheet(&medKitIcon, renderer, MED_KIT_ICON_PNG_DATA, { 0, 0 }, { 0, 0 }, 1, 1, nil, 0);
 	init_spritesheet(&hostageIcon, renderer, HOSTAGE_ICON_PNG_DATA, { 0, 0 }, { 0, 0 }, 1, 1, nil, 0);
 
-	dialogueBoxWithAssistant = create_dialogue_box(game, { create_dialogue_item(game, "What would you like to do?", { "> Fight", "> Flight" }) }, true);
+	dialogueBoxWithAssistant = create_dialogue_box(game, { create_dialogue_item(game, "What would you like to do?", { "> Fight", "> Flight" }) }, false);
 	
 	running = true;
 	state = .Menu;
@@ -90,7 +90,7 @@ init_game :: proc(using game: ^Game) -> bool {
 
 reset_game :: proc(using game: ^Game) {
 	set_current_map(game, townHallTilemap);
-	// set_current_map(game, outsideTilemap);
+	set_current_map(game, outsideTilemap);
 	
 	hostagesSaved = 0;
 	hostagesLeft = u32(len(hostages));
@@ -130,7 +130,7 @@ run_game :: proc(using game: ^Game) {
 handle_events :: proc(using game: ^Game) {
 	event: sdl.Event;
 
-	for sdl.PollEvent(&event) != 0 {
+	for sdl.PollEvent(&event) {
 		#partial switch event.type {
 			case .QUIT:
 				running = false;

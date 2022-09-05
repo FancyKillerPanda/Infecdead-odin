@@ -235,13 +235,13 @@ draw_minimap :: proc(using tilemap: ^Tilemap) {
 	minimapPosition: Vector2 = { game.screenDimensions.x * 89 / 100, game.screenDimensions.y * 1 / 100 };
 	minimapRect := create_sdl_rect(minimapPosition, MINIMAP_TILE_SIZE * numberOfTiles);
 
+	sdl.SetRenderDrawColor(game.renderer, 0, 0, 0, 255);
+	sdl.RenderFillRect(game.renderer, &sdl.Rect{ minimapRect.x - 2, minimapRect.y - 2, minimapRect.w + 4, minimapRect.h + 4 });
+
 	draw_tilemap(tilemap, 0, minimapPosition, MINIMAP_TILE_SIZE, 0, true);
 	draw_tilemap(tilemap, 1, minimapPosition, MINIMAP_TILE_SIZE, 0, true);
 	
 	draw_player_on_minimap(&game.player, minimapPosition);
-	
-	sdl.SetRenderDrawColor(game.renderer, 0, 0, 0, 255);
-	sdl.RenderDrawRect(game.renderer, &minimapRect);
 }
 
 draw_tilemap :: proc(using tilemap: ^Tilemap, pass: u32, outputPosition: Vector2, outputTileDimensions: Vector2, viewOffset: Vector2, renderFullMap: bool) {
